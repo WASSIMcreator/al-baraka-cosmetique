@@ -32,27 +32,17 @@
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <!-- Logo AL BARAKA : arche marocaine + étoile khatam + monogramme AB -->
-  <symbol id="mark" viewBox="0 0 200 250">
+  <!-- Logo AL BARAKA : arche marocaine + étoile (version épurée) -->
+  <symbol id="mark" viewBox="0 0 160 200">
     <defs>
-      <linearGradient id="mkGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe2a8"/><stop offset=".45" stop-color="#f4b45a"/><stop offset="1" stop-color="#d96a2a"/></linearGradient>
-      <linearGradient id="mkGoldH" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe9bd"/><stop offset=".5" stop-color="#f4a43c"/><stop offset="1" stop-color="#c2441b"/></linearGradient>
-      <radialGradient id="mkIn" cx=".5" cy=".38" r=".75"><stop offset="0" stop-color="#4a2210"/><stop offset=".6" stop-color="#26100a"/><stop offset="1" stop-color="#160803"/></radialGradient>
-      <radialGradient id="mkGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffb35c" stop-opacity=".55"/><stop offset="1" stop-color="#ffb35c" stop-opacity="0"/></radialGradient>
+      <linearGradient id="mkGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9b872"/><stop offset="1" stop-color="#d9955a"/></linearGradient>
+      <mask id="mkHole"><rect width="160" height="200" fill="#fff"/><circle cx="80" cy="92" r="9" fill="#000"/></mask>
     </defs>
-    <path d="M38 244 V132 C22 112 20 82 34 58 A76 76 0 0 1 166 58 C180 82 178 112 162 132 V244 Z" fill="url(#mkIn)"/>
-    <path d="M38 244 V132 C22 112 20 82 34 58 A76 76 0 0 1 166 58 C180 82 178 112 162 132 V244 Z" fill="none" stroke="url(#mkGold)" stroke-width="7" stroke-linejoin="round"/>
-    <path d="M52 244 V128 C40 112 38 88 49 68 A61 61 0 0 1 151 68 C162 88 160 112 148 128 V244" fill="none" stroke="#f7c978" stroke-width="2" opacity=".55"/>
-    <circle cx="100" cy="104" r="52" fill="url(#mkGlow)"/>
-    <g transform="translate(100 104)">
-      <rect x="-27" y="-27" width="54" height="54" fill="url(#mkGoldH)"/>
-      <rect x="-27" y="-27" width="54" height="54" fill="url(#mkGoldH)" transform="rotate(45)"/>
-      <rect x="-19" y="-19" width="38" height="38" fill="none" stroke="#26100a" stroke-width="2.6"/>
-      <rect x="-19" y="-19" width="38" height="38" fill="none" stroke="#26100a" stroke-width="2.6" transform="rotate(45)"/>
-      <circle r="9" fill="#26100a"/><circle r="4.2" fill="url(#mkGold)"/>
-    </g>
-    <text x="100" y="198" text-anchor="middle" direction="ltr" font-family="Playfair Display,Georgia,serif" font-weight="700" font-size="38" letter-spacing="3" fill="url(#mkGold)">AB</text>
-    <path d="M100 214 l6 6 -6 6 -6 -6z" fill="url(#mkGold)"/>
+    <path d="M28 194 V104 C16 88 15 64 26 46 A61 61 0 0 1 134 46 C145 64 144 88 132 104 V194" fill="none" stroke="url(#mkGold)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <g mask="url(#mkHole)"><g transform="translate(80 92)" fill="url(#mkGold)">
+      <rect x="-22" y="-22" width="44" height="44" rx="2"/>
+      <rect x="-22" y="-22" width="44" height="44" rx="2" transform="rotate(45)"/>
+    </g></g>
   </symbol>
   <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></symbol>
   <symbol id="i-cash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/></symbol>
