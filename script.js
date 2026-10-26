@@ -58,7 +58,10 @@ const CATS = [
 ];
 /* Melatonin — prix 199 DH la boîte */
 const MELATONIN = {id:'melatonin', price:199, img:'melatonin-front.png', bg:['#3b1f5c','#160c22'], name:{ar:'Melatonin · علبة 60 كبسولة', fr:'Melatonin · boîte de 60 gélules'}};
-const ALL = [FOCUS, MELATONIN, ...PACKS, ...CLOTHES];
+/* Moringa (170 DH) et Omega 3 (189 DH) — marque online */
+const MORINGA = {id:'moringa', price:170, img:'moringa-front.png', bg:['#2f5a2c','#0e1f10'], name:{ar:'Moringa · علبة 60 كبسولة', fr:'Moringa · boîte de 60 gélules'}};
+const OMEGA = {id:'omega3', price:189, img:'omega-front.png', bg:['#8a5410','#2a1704'], name:{ar:'Omega 3 · علبة 60 كبسولة', fr:'Oméga 3 · boîte de 60 capsules'}};
+const ALL = [FOCUS, MELATONIN, MORINGA, OMEGA, ...PACKS, ...CLOTHES];
 const byId = id => ALL.find(p => p.id === id);
 
 /* ===================== prix FOCUS par paliers ===================== */
@@ -115,6 +118,10 @@ const FR = {
   melLead:'<b>Melatonin</b> : une boîte de 60 gélules à la mélatonine, magnésium, racine de valériane, L‑théanine et safran, pour vous détendre avant le coucher.',
   mi1:'Mélatonine', mi2:'Citrate de magnésium', mi3:'Racine de valériane', mi5:'Extrait de safran',
   melUse:'1 à 2 gélules par jour · Complément alimentaire, pas un médicament', melCta:'Commander Melatonin →', melAdd:'Ajouter au panier',
+  duoEy:'Nouveau chez AL BARAKA', duoH:'Et aussi <span class="grad">chez nous</span>', duoP:'Compléments alimentaires fabriqués dans un laboratoire agréé ONSSA, paiement à la livraison et livraison gratuite.',
+  morTag:'🌿 Énergie & vitalité', morAr:'', morP:'Boîte de 60 gélules à la poudre de feuilles de moringa, extrait de curcuma et poivre noir.', mor1:'Poudre de feuilles de moringa', mor2:'Extrait de curcuma', mor3:'Extrait de poivre noir', morCta:'Commander Moringa · 170 DH',
+  omTag:'🐟 Oméga 3 · EPA & DHA', omAr:'', omP:'Boîte de 60 capsules d’huile de poisson riche en EPA et DHA, avec vitamine E.', om1:'Huile de poisson (EPA & DHA)', om4:'Vitamine E', omCta:'Commander Oméga 3 · 189 DH', addCart:'Ajouter au panier',
+  duoNote:'Tel qu’indiqué sur l’étiquette · 1 à 2 gélules par jour · Compléments alimentaires, pas des médicaments · 🛡️ Laboratoire agréé ONSSA (CAPV.26.1009.24)',
   stickyBtn:'Commander', cart:'Panier', toOrder:'Finaliser la commande'
 };
 const AR = {};
@@ -391,6 +398,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.buyProd){ const id = b.dataset.buyProd; if (!cart.some(i => i.id === id)) addToCart(id, ''); return goOrder(); }
   if (b.hasAttribute('data-buy-mel')){ setTierQty('melatonin', melOffer); return goOrder(); }
   if (b.hasAttribute('data-buy')) return buy(cart.find(i=>i.id==='focus') && b.closest('.sticky,.drawer') ? cart.find(i=>i.id==='focus').qty : offer);
   if (b.dataset.offer){ offer = +b.dataset.offer; renderOffers(); return buy(offer); }

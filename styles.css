@@ -447,3 +447,38 @@ footer .logo{color:var(--cream)}
 @media (max-width:760px){.mel-art{height:380px}.mel-front{width:190px}.mel-back{width:150px}.mel-moon{width:220px;height:220px}.mel-price{width:96px;height:96px}.mel-price b{font-size:30px}.mel-buy .btn{flex:1}}
 .mel-offers{max-width:540px;margin-bottom:18px}
 .mel-onssa{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#f3e3ff;background:rgba(255,255,255,.07);border:1px solid rgba(201,166,255,.3);border-radius:99px;padding:7px 14px;margin:-10px 0 20px}
+
+/* ============ MORINGA + OMEGA 3 ============ */
+.duo{background:linear-gradient(180deg,var(--cream),#f8ead6)}
+.duo-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.pc{position:relative;overflow:hidden;border-radius:30px;display:grid;grid-template-columns:.9fr 1.1fr;align-items:center;gap:10px;padding:26px;color:#fff;box-shadow:var(--shadow)}
+.pc-mor{background:radial-gradient(500px 400px at 25% 40%,#2f5a2c,#17301a 60%,#0e1f10)}
+.pc-om{background:radial-gradient(500px 400px at 25% 40%,#8a5410,#4a2a08 60%,#2a1704)}
+.pc-art{position:relative;height:330px}
+.pc-halo{position:absolute;width:230px;height:230px;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%);filter:blur(10px)}
+.pc-mor .pc-halo{background:radial-gradient(circle,rgba(120,220,90,.45),transparent 70%)}
+.pc-om .pc-halo{background:radial-gradient(circle,rgba(255,190,80,.5),transparent 70%)}
+.pc-front,.pc-back{position:absolute;height:auto;filter:drop-shadow(0 24px 30px rgba(0,0,0,.5))}
+.pc-front{width:150px;left:50%;bottom:10px;transform:translateX(-62%) rotate(-5deg);z-index:2;transition:transform .5s}
+.pc-back{width:120px;left:50%;bottom:24px;transform:translateX(8%) rotate(8deg);opacity:.9}
+.pc:hover .pc-front{transform:translateX(-62%) rotate(-1deg) translateY(-8px)}
+.pc-price{position:absolute;top:0;inset-inline-start:0;z-index:3;width:86px;height:86px;border-radius:50%;display:grid;place-content:center;text-align:center;background:conic-gradient(from 30deg,#ffe2a8,#e9b872,#d9955a,#e9b872,#ffe2a8);color:#1d0d05;transform:rotate(-10deg);box-shadow:0 12px 30px -8px rgba(0,0,0,.55)}
+.pc-price b{font:900 28px/1 'DM Sans';direction:ltr}.pc-price small{font-size:12px;font-weight:800}
+.pc-tag{display:inline-block;font-size:13px;font-weight:800;padding:5px 12px;border-radius:99px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2)}
+.pc h3{font-size:30px;margin:10px 0 6px;color:#fff}
+.pc h3 span{font-family:'Reem Kufi',sans-serif;font-size:22px;opacity:.85;margin-inline-start:6px}
+.pc p{font-size:14px;color:rgba(255,255,255,.82);margin:0 0 12px;line-height:1.8}
+.pc-ing{list-style:none;padding:0;margin:0 0 16px;display:grid;gap:6px}
+.pc-ing li{display:flex;align-items:center;gap:10px;font-size:13.5px;background:rgba(255,255,255,.08);border-radius:12px;padding:7px 12px}
+.pc-ing b{font:800 13px 'DM Sans';direction:ltr;min-width:64px;color:#ffe2a8}
+.pc-buy{display:flex;gap:10px;flex-wrap:wrap}
+.pc-buy .btn{padding:12px 18px;font-size:14px}
+.btn-line{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)}
+.duo-note{text-align:center;color:var(--muted);font-size:13px;margin:22px auto 0;max-width:760px}
+@media (max-width:1020px){.duo-grid{grid-template-columns:1fr}}
+@media (max-width:560px){.pc{grid-template-columns:1fr;padding:20px}.pc-art{height:280px}.pc-buy .btn{flex:1}}
+.duo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pc,.pc-info,.pc-art{min-width:0}
+.pc-buy .btn{white-space:normal}
+@media (max-width:1020px){.duo-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:560px){.pc{grid-template-columns:minmax(0,1fr)}}
