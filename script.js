@@ -56,7 +56,9 @@ const CATS = [
   {id:'all',fr:'Tout',ar:'الكل'},{id:'hommes',fr:'Hommes',ar:'رجال'},{id:'femmes',fr:'Femmes',ar:'نساء'},
   {id:'traditionnel',fr:'Traditionnel',ar:'تقليدي'},{id:'accessoires',fr:'Accessoires',ar:'إكسسوارات'},
 ];
-const ALL = [FOCUS, ...PACKS, ...CLOTHES];
+/* Melatonin — prix 199 DH la boîte */
+const MELATONIN = {id:'melatonin', price:199, img:'melatonin-front.png', bg:['#3b1f5c','#160c22'], name:{ar:'Melatonin · علبة 60 كبسولة', fr:'Melatonin · boîte de 60 gélules'}};
+const ALL = [FOCUS, MELATONIN, ...PACKS, ...CLOTHES];
 const byId = id => ALL.find(p => p.id === id);
 
 /* ===================== prix FOCUS par paliers ===================== */
@@ -106,6 +108,10 @@ const FR = {
   q5:'FOCUS est-il un médicament ?', a5:'Non, c’est un complément alimentaire. En cas de problème de santé ou de traitement, demandez l’avis d’un médecin.',
   q6:'Le numéro ONSSA sur la boîte ?', a6:'Le numéro CAPV.26.1009.24 correspond, dans le registre ONSSA, à l’établissement fabricant — ce n’est pas un enregistrement propre au produit FOCUS.',
   finH:'Prêt à commencer ?', finP:'Commandez maintenant, payez à la réception, la livraison est pour nous.', finCta:'Commander FOCUS →',
+  melOnly:'seulement', melDh:'DH', melEy:'🌙 Nouveau · SLEEP', melH:'Nuits paisibles', melH2:'réveil reposé',
+  melLead:'<b>Melatonin</b> : une boîte de 60 gélules à la mélatonine, magnésium, racine de valériane, L‑théanine et safran, pour vous détendre avant le coucher.',
+  mi1:'Mélatonine', mi2:'Citrate de magnésium', mi3:'Racine de valériane', mi5:'Extrait de safran',
+  melUse:'1 à 2 gélules par jour · Complément alimentaire, pas un médicament', melCta:'Commander Melatonin →', melAdd:'Ajouter au panier',
   stickyBtn:'Commander', cart:'Panier', toOrder:'Finaliser la commande'
 };
 const AR = {};
@@ -380,6 +386,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
+  if (b.hasAttribute('data-buy-mel')){ if (!cart.some(i => i.id === 'melatonin')) addToCart('melatonin', ''); return goOrder(); }
   if (b.hasAttribute('data-buy')) return buy(cart.find(i=>i.id==='focus') && b.closest('.sticky,.drawer') ? cart.find(i=>i.id==='focus').qty : offer);
   if (b.dataset.offer){ offer = +b.dataset.offer; renderOffers(); return buy(offer); }
   if (b.dataset.cat){ cat = b.dataset.cat; renderFilters(); renderGrid(); return; }
