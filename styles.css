@@ -445,3 +445,5 @@ footer .logo{color:var(--cream)}
 .mel .btn-ghost{color:#f3e3ff;border-color:rgba(201,166,255,.45)}
 @media (max-width:1020px){.mel-in{grid-template-columns:1fr;gap:10px}.mel-art{height:440px;max-width:520px;width:100%;margin-inline:auto}}
 @media (max-width:760px){.mel-art{height:380px}.mel-front{width:190px}.mel-back{width:150px}.mel-moon{width:220px;height:220px}.mel-price{width:96px;height:96px}.mel-price b{font-size:30px}.mel-buy .btn{flex:1}}
+.mel-offers{max-width:540px;margin-bottom:18px}
+.mel-onssa{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#f3e3ff;background:rgba(255,255,255,.07);border:1px solid rgba(201,166,255,.3);border-radius:99px;padding:7px 14px;margin:-10px 0 20px}

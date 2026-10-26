@@ -68,8 +68,10 @@ function focusPrice(q){
   if (q) total += OFFERS[q-1].price;
   return total;
 }
-const itemTotal = i => i.id === 'focus' ? focusPrice(i.qty) : byId(i.id).price * i.qty;
-const itemFull  = i => i.id === 'focus' ? UNIT * i.qty : byId(i.id).price * i.qty;
+const TIERED = ['focus','melatonin'];   // produits avec offres 1/2/3 boîtes
+const itemTotal = i => TIERED.includes(i.id) ? focusPrice(i.qty) : byId(i.id).price * i.qty;
+const itemFull  = i => TIERED.includes(i.id) ? UNIT * i.qty : byId(i.id).price * i.qty;
+const tierName = i => (i.id === 'focus' ? 'FOCUS' : 'Melatonin') + ' · ' + boxLabel(i.qty);
 
 /* ===================== textes (FR ; l'arabe est lu dans le HTML) ===================== */
 const FR = {
@@ -79,7 +81,8 @@ const FR = {
   heroH1:'Esprit clair.<br><span class="grad">Journée légère.</span>',
   heroLead:'<b>FOCUS</b> : 60 gélules au ginkgo, bacopa, L‑tyrosine, magnésium et vitamines B, pour soutenir la concentration, la mémoire et réduire la fatigue mentale.',
   cta:'Commander', ctaSub:'Paiement à la livraison — rien à payer maintenant',
-  as1:'Paiement à la livraison', as2:'Livraison gratuite', as3:'Confirmation WhatsApp',
+  as1:'Paiement à la livraison', as2:'Livraison gratuite', as3:'Confirmation WhatsApp', as4:'Laboratoire agréé ONSSA',
+  melOnssa:'🛡️ Fabriqué dans un laboratoire agréé ONSSA · Agrément <span dir="ltr">CAPV.26.1009.24</span>',
   stk:'DH<br>la boîte', cod1:'Payez à la réception', cod2:'Livraison offerte',
   iEy:'Telle qu’indiquée sur l’étiquette', iH2:'Qu’y a-t-il dans <span class="grad">FOCUS</span> ?', iLead:'6 ingrédients choisis dans chaque gélule, avec des doses claires.',
   bxEy:'La formule', bxT:'Des ingrédients choisis<br>pour votre routine', bxP:'Plantes connues + acide aminé + minéraux et vitamines.',
@@ -203,6 +206,7 @@ let lang = store.get('ab_lang','ar') === 'fr' ? 'fr' : 'ar';
 let cat = 'all';
 let cart = store.get('ab_cart', []).filter(i => byId(i.id) && i.qty > 0);
 let offer = DEFAULT_OFFER;
+let melOffer = DEFAULT_OFFER;
 const chosen = {};
 const fmt = n => (Math.round(n*100)/100).toLocaleString('fr-MA') + ' DH';
 const t = k => DYN[lang][k];
@@ -230,7 +234,7 @@ function applyLang(){
   $('#langTxt').textContent = t('lang');
   const band = arr => { const w = arr.map(x => `<span>${x}</span>`).join(''); return w+w+w+w; };
   $('#t1').innerHTML = band(t('b1')); $('#t2').innerHTML = band(t('b2'));
-  renderOrbit(); renderOffers(); renderFilters(); renderGrid(); renderPacks(); renderCart();
+  renderOrbit(); renderOffers(); renderMelOffers(); renderFilters(); renderGrid(); renderPacks(); renderCart();
   store.set('ab_lang', lang);
 }
 const boxLabel = q => q === 1 ? t('box1') : t('boxN')(q);
@@ -284,7 +288,7 @@ function renderGrid(){ $('#grid').innerHTML = CLOTHES.filter(p => cat==='all' ||
 function renderPacks(){ $('#packGrid').innerHTML = PACKS.map(cardHTML).join(''); afterRender(); }
 function lineHTML(i, k){
   const p = byId(i.id), tot = itemTotal(i), full = itemFull(i);
-  const name = i.id === 'focus' ? `FOCUS · ${boxLabel(i.qty)}` : p.name[lang];
+  const name = TIERED.includes(i.id) ? tierName(i) : p.name[lang];
   return `<div class="line"><div class="thumb" style="--bg1:${p.bg[0]};--bg2:${p.bg[1]}">${picOf(p)}</div>
     <div><b>${name}</b><small>${i.size ? t('size')+' : '+i.size : (i.id==='focus' ? '60 × '+i.qty : '')}</small>
       <div class="qty"><button type="button" data-q="${k}" data-d="-1" aria-label="-">−</button><span>${i.qty}</span><button type="button" data-q="${k}" data-d="1" aria-label="+">+</button></div></div>
@@ -382,11 +386,12 @@ function goOrder(){
 function buy(q){ setFocusQty(q || offer); goOrder(); }
 
 document.addEventListener('change', e => {
+  if (e.target.name === 'meloffer'){ melOffer = +e.target.value; $$('#melOffers .offer').forEach(l => l.classList.toggle('on', l.contains(e.target))); $('#melPrice').textContent = OFFERS[melOffer-1].price + ' DH'; }
   if (e.target.name === 'offer'){ offer = +e.target.value; $$('#heroOffers .offer').forEach(l => l.classList.toggle('on', l.contains(e.target))); updateCta(); }
 });
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.hasAttribute('data-buy-mel')){ if (!cart.some(i => i.id === 'melatonin')) addToCart('melatonin', ''); return goOrder(); }
+  if (b.hasAttribute('data-buy-mel')){ setTierQty('melatonin', melOffer); return goOrder(); }
   if (b.hasAttribute('data-buy')) return buy(cart.find(i=>i.id==='focus') && b.closest('.sticky,.drawer') ? cart.find(i=>i.id==='focus').qty : offer);
   if (b.dataset.offer){ offer = +b.dataset.offer; renderOffers(); return buy(offer); }
   if (b.dataset.cat){ cat = b.dataset.cat; renderFilters(); renderGrid(); return; }
@@ -418,7 +423,7 @@ $('#orderForm').addEventListener('submit', e => {
   let bad = null;
   ['name','phone','city'].forEach(n => { const ok = n === 'phone' ? phoneOk(val(n)) : val(n).length > 1; f.elements[n].setAttribute('aria-invalid', !ok); if (!ok && !bad) bad = n; });
   if (bad){ msg.textContent = bad === 'phone' && val('phone') ? t('errPhone') : t('errFields'); f.elements[bad].focus(); return; }
-  const lines = cart.map(i => { const p = byId(i.id); const nm = i.id === 'focus' ? `FOCUS · ${boxLabel(i.qty)}` : `${p.name[lang]}${i.size ? ' — '+t('size')+' '+i.size : ''} × ${i.qty}`; return `• ${nm} = ${fmt(itemTotal(i))}`; });
+  const lines = cart.map(i => { const p = byId(i.id); const nm = TIERED.includes(i.id) ? tierName(i) : `${p.name[lang]}${i.size ? ' — '+t('size')+' '+i.size : ''} × ${i.qty}`; return `• ${nm} = ${fmt(itemTotal(i))}`; });
   const text = [
     `*${t('mTitle')}*`, '',
     `${t('mName')}: ${val('name')}`, `${t('mPhone')}: ${normPhone(val('phone'))}`, `${t('mCity')}: ${val('city')}`,
@@ -553,3 +558,24 @@ function init3D(stage){
   }
   resize(); frame();
 }
+
+/* ===================== offres Melatonin ===================== */
+function renderMelOffers(){
+  const box = document.getElementById('melOffers'); if (!box) return;
+  box.innerHTML = OFFERS.map(o => `
+    <label class="offer ${o.qty===melOffer?'on':''}">
+      <input type="radio" name="meloffer" value="${o.qty}" ${o.qty===melOffer?'checked':''}>
+      ${o.tag?`<span class="tag">${o.tag[lang]}</span>`:''}<span class="dot"></span>
+      <span class="q">${boxLabel(o.qty)}</span>
+      <span class="p">${o.price} <small>DH</small></span>
+      ${o.qty>1?`<s>${UNIT*o.qty} DH</s><span class="save">${t('save')} ${UNIT*o.qty-o.price} DH</span>`:`<span class="save" style="color:#cfb39a">${t('perBox')}</span>`}
+    </label>`).join('');
+  const pb = document.getElementById('melPrice'); if (pb) pb.textContent = OFFERS[melOffer-1].price + ' DH';
+}
+function setTierQty(id, q){
+  const ex = cart.find(i => i.id === id);
+  if (ex) ex.qty = q; else cart.push({id, size:'', qty:q});
+  renderCart(); bump();
+  track('AddToCart', {content_ids:[id], content_name:id, content_type:'product', value:focusPrice(q), currency:CONFIG.currency, num_items:q});
+}
+renderMelOffers();
