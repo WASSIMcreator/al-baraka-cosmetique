@@ -290,7 +290,8 @@ footer a{color:var(--gold)}
       </div>
       <label class="field"><span>الاسم الكامل</span><input name="nom" autocomplete="name" required placeholder="مثلاً: فاطمة الزهراء"></label>
       <label class="field"><span>رقم الهاتف</span><input name="tel" type="tel" inputmode="tel" autocomplete="tel" required placeholder="06XXXXXXXX" pattern="^(\+?212|0)\s?[5-7](\s?\d){8}$" dir="ltr" style="text-align:right"></label>
-      <label class="field"><span>المدينة</span><input name="ville" autocomplete="address-level2" required placeholder="مثلاً: الدار البيضاء"></label>
+      <label class="field"><span>المدينة</span><input name="ville" list="villes" autocomplete="off" required placeholder="كتبي المدينة ولا ختاريها من اللائحة"><small id="villeOk" style="display:block;min-height:1.2em;font-size:13px;font-weight:700;color:#1f8a4c"></small></label>
+      <datalist id="villes"></datalist>
       <label class="field"><span>العنوان</span><input name="adresse" autocomplete="street-address" required placeholder="الحي، الزنقة، رقم الدار"></label>
       <p class="err" id="err" role="alert"></p>
       <div class="total"><span>المجموع</span><b id="tot" class="lat">180 DH</b></div>
@@ -351,12 +352,37 @@ const stickyP = document.querySelector('.sticky .p b');
 const qty = () => +f.q.value;
 f.addEventListener('change', () => { tot.textContent = stickyP.textContent = CONFIG.prices[qty()] + ' DH'; });
 
+/* Moroccan cities: the name sent to Marque Online (French) + the ways people write it (Arabic, Darija, short forms).
+   A city typed any of these ways is sent with its French name, so the call centre gets a city it recognises. */
+const CITIES = [
+  ['Casablanca','الدار البيضاء','الدارالبيضاء','البيضاء','كازا','كازابلانكا','casa','dar beida','darbeida'],
+  ['Rabat','الرباط','رباط'],['Salé','سلا','sale','sla'],['Témara','تمارة','temara'],['Tamesna','تامسنا'],['Skhirat','الصخيرات'],
+  ['Kénitra','القنيطرة','قنيطرة','kenitra'],['Mohammedia','المحمدية','محمدية','mohamedia'],['Bouznika','بوزنيقة'],['Benslimane','بنسليمان','ben slimane'],
+  ['Fès','فاس','fes','fez'],['Meknès','مكناس','meknes'],['Sefrou','صفرو'],['Ifrane','إفران','افران'],['Azrou','أزرو','ازرو'],['Taza','تازة'],
+  ['Marrakech','مراكش','marrakesh','marakech'],['Safi','آسفي','اسفي'],['Essaouira','الصويرة'],['El Kelaa des Sraghna','قلعة السراغنة','kelaa'],['Ben Guerir','بنجرير','بن جرير'],['Youssoufia','اليوسفية'],['Chichaoua','شيشاوة'],
+  ['Agadir','أكادير','اكادير','اگادير'],['Inezgane','إنزكان','انزكان'],['Ait Melloul','أيت ملول','ايت ملول','ait meloul'],['Dcheira','الدشيرة'],['Biougra','بيوكرى'],['Taroudant','تارودانت'],['Tiznit','تيزنيت'],['Guelmim','كلميم'],['Tan-Tan','طانطان','tantan'],
+  ['Tanger','طنجة','tangier','tanja'],['Tétouan','تطوان','tetouan'],['Martil','مرتيل'],['M\'diq','المضيق','mdiq'],['Fnideq','الفنيدق'],['Larache','العرائش'],['Ksar El Kébir','القصر الكبير','ksar el kebir'],['Chefchaouen','شفشاون','chaouen'],['Ouazzane','وزان'],['Al Hoceima','الحسيمة','alhoceima'],
+  ['Oujda','وجدة'],['Nador','الناظور','ناظور'],['Berkane','بركان'],['Taourirt','تاوريرت'],['Guercif','جرسيف'],
+  ['El Jadida','الجديدة','jadida'],['Settat','سطات'],['Berrechid','برشيد'],['Had Soualem','حد السوالم'],['Sidi Bennour','سيدي بنور'],['Azemmour','أزمور','ازمور'],
+  ['Béni Mellal','بني ملال','beni mellal'],['Khouribga','خريبكة'],['Fquih Ben Salah','الفقيه بن صالح','fkih ben salah'],['Kasba Tadla','قصبة تادلة'],['Oued Zem','وادي زم'],['Khénifra','خنيفرة','khenifra'],
+  ['Khémisset','الخميسات','khemisset'],['Sidi Kacem','سيدي قاسم'],['Sidi Slimane','سيدي سليمان'],['Souk El Arbaa','سوق الأربعاء','سوق الاربعاء'],
+  ['Errachidia','الرشيدية'],['Ouarzazate','ورزازات'],['Tinghir','تنغير'],['Zagora','زاكورة'],['Midelt','ميدلت'],
+  ['Laâyoune','العيون','laayoune'],['Dakhla','الداخلة']
+];
+const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ًͯ-ْ]/g, '')
+  .replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[^a-zء-ي]/g, '');
+const CITY_INDEX = new Map(); CITIES.forEach(([fr, ...alts]) => [fr, ...alts].forEach(n => CITY_INDEX.set(norm(n), fr)));
+const cityOf = v => CITY_INDEX.get(norm(v)) || null;
+document.getElementById('villes').innerHTML = CITIES.map(([fr, ar]) => `<option value="${fr}">${ar}</option>`).join('');
+f.ville.addEventListener('input', () => { const c = cityOf(f.ville.value); document.getElementById('villeOk').textContent = c ? '✓ ' + c : ''; });
+
 const qs = new URLSearchParams(location.search);
 const src = ['utm_source','utm_campaign','utm_content'].map(k => qs.get(k)).filter(Boolean).join(' / ');
 
 f.addEventListener('submit', async e => {
   e.preventDefault();
-  const nom = f.nom.value.trim(), tel = f.tel.value.trim(), ville = f.ville.value.trim(), adresse = f.adresse.value.trim();
+  const nom = f.nom.value.trim(), tel = f.tel.value.trim(), adresse = f.adresse.value.trim();
+  const ville = cityOf(f.ville.value) || f.ville.value.trim();   // official French name when we know the city
   if (nom.length < 2 || ville.length < 2 || adresse.length < 3 || !tel || !f.tel.checkValidity()){ err.textContent = 'عافاك عمّري الاسم، رقم هاتف صحيح (06/07…)، المدينة والعنوان.'; return; }
   err.textContent = '';
   const q = qty(), total = CONFIG.prices[q];
