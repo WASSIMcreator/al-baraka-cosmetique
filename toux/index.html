@@ -81,9 +81,19 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;heigh
 
 .prods{display:grid;gap:22px}
 .prod{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 20px 50px -30px rgba(10,61,70,.35)}
-.prod .pic{position:relative;background:#cfd3d3;aspect-ratio:1;max-height:420px;overflow:hidden}
+.prod .pic{position:relative;background:#cfd3d3;height:clamp(320px,88vw,430px);overflow:hidden}
 .prod .pic img{width:100%;height:100%;object-fit:cover}
 .prod .pic::after{content:"";position:absolute;inset:auto 0 0;height:30%;background:linear-gradient(180deg,transparent,rgba(10,61,70,.18))}
+.prod .pic canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y;cursor:grab;opacity:0;transition:opacity .6s}
+.prod .pic.on{background:radial-gradient(70% 60% at 50% 42%,#ffffff 0%,#e3eeee 55%,#c3d6d6 100%)}
+.prod .pic.on::before{content:"";position:absolute;left:50%;bottom:7%;width:46%;height:6%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(4,28,33,.35),transparent)}
+.prod .pic.on canvas{opacity:1}
+.prod .pic.on img{opacity:0}
+.prod .pic img{transition:opacity .6s}
+.prod .pic canvas:active{cursor:grabbing}
+.prod .hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:2;background:rgba(4,28,33,.78);color:#fff;font-size:13px;font-weight:700;padding:3px 14px;border-radius:99px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .4s}
+.prod .pic.on .hint{opacity:1}
+.prod .pic.touched .hint{opacity:0}
 .prod .num{position:absolute;top:14px;inset-inline-start:14px;z-index:1;background:var(--deep);color:var(--gold);font-weight:900;font-size:15px;padding:2px 12px;border-radius:99px;direction:ltr}
 .prod .body{padding:22px 22px 24px}
 .prod .tag{display:inline-block;background:#e3f7fa;color:var(--teal2);font-weight:800;font-size:13px;padding:3px 12px;border-radius:99px}
@@ -229,7 +239,7 @@ footer a{color:var(--gold)}
     </div>
     <div class="prods">
       <article class="prod">
-        <div class="pic"><img src="sirop.jpg" alt="سيروب الكحة 125ml" width="800" height="800" loading="lazy"><span class="num">01</span></div>
+        <div class="pic" data-3d="sirop"><img src="sirop.jpg" alt="سيروب الكحة 125ml" width="800" height="800" loading="lazy"><span class="num">01</span><span class="hint">👆 دوّر باش تشوف المكونات</span></div>
         <div class="body">
           <span class="tag">💧 سيروب 125ml</span>
           <h3>سيروب الكحة · <span class="lat">Soulagement &amp; Réconfort</span></h3>
@@ -243,7 +253,7 @@ footer a{color:var(--gold)}
         </div>
       </article>
       <article class="prod">
-        <div class="pic"><img src="capsules.jpg" alt="Arrêter de fumer — 60 كبسولة" width="800" height="800" loading="lazy"><span class="num">02</span></div>
+        <div class="pic" data-3d="caps"><img src="capsules.jpg" alt="Arrêter de fumer — 60 كبسولة" width="800" height="800" loading="lazy"><span class="num">02</span><span class="hint">👆 دوّر باش تشوف المكونات</span></div>
         <div class="body">
           <span class="tag">🚭 60 كبسولة</span>
           <h3 class="lat" style="text-align:right">Arrêter de fumer</h3>
@@ -363,5 +373,6 @@ f.addEventListener('submit', e => {
   location.href = waLink(msg);
 });
 </script>
+<script src="bottles3d.js" defer></script>
 </body>
 </html>
