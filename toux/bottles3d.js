@@ -16,9 +16,15 @@
 
   /* Front half: real photo of the label (x = sin θ), unprojected so u is linear in θ.
      Back half: the back label redrawn as sharp text (the back photos are too small to read in 3D). */
+  const labelCache = {};
   async function labelTexture(front, drawBack, W, H){
+    labelCache[front] = labelCache[front] || paintLabel(front, drawBack, W, H);   // hero + card share one painted label
+    const t = new THREE.CanvasTexture(await labelCache[front]);
+    t.encoding = THREE.sRGBEncoding; t.wrapS = THREE.RepeatWrapping; t.anisotropy = MAX_ANISO;
+    return t;
+  }
+  async function paintLabel(front, drawBack, W, H){
     const f = await img(front);
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const ctx = cv.getContext('2d');
     const half = W/2;
@@ -30,9 +36,7 @@
       ctx.drawImage(f, Math.min(m+iw-1, sx), 0, Math.max(1, Math.min(sw, m+iw - sx)), f.height, x, 0, 1.6, H);
     }
     ctx.save(); ctx.translate(half, 0); drawBack(ctx, half, H); ctx.restore();
-    const t = new THREE.CanvasTexture(cv);
-    t.encoding = THREE.sRGBEncoding; t.wrapS = THREE.RepeatWrapping; t.anisotropy = MAX_ANISO;
-    return t;
+    return cv;
   }
   let MAX_ANISO = 4;
   const FONT = 'Arial, Helvetica, sans-serif';
@@ -160,24 +164,50 @@
 
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(30, 1, .1, 100);
-    if (el.dataset['3d'] === 'sirop') cam.position.set(0, .1, 11.4); else cam.position.set(0, .1, 9.2);
+    const kind = el.dataset['3d'];
+    cam.position.set(0, .1, kind === 'sirop' ? 11.4 : kind === 'duo' ? 16 : 9.2);
     scene.add(new THREE.HemisphereLight(0xffffff, 0x7f9a9a, .55));
     const key = new THREE.DirectionalLight(0xffffff, .75); key.position.set(4, 5, 6); scene.add(key);
     const fill = new THREE.DirectionalLight(0xbfe9f0, .3); fill.position.set(-5, 1, 3); scene.add(fill);
     const rim = new THREE.DirectionalLight(0xffffff, .5); rim.position.set(-2, 3, -6); scene.add(rim);
 
-    const group = new THREE.Group(), spin = new THREE.Group();
-    spin.add(group); scene.add(spin);
-    (el.dataset['3d'] === 'sirop' ? buildSirop(group) : buildCaps(group))
-      .then(() => { el.classList.add('on'); dirty = true; })
-      .catch(() => { cv.remove(); });
+    // one turning group per product; 'duo' = jar on the left, bottle on the right, standing on the same floor
+    const parts = kind === 'duo' ? [[buildCaps, -1.5], [buildSirop, 1.5]] : [[kind === 'sirop' ? buildSirop : buildCaps, 0]];
+    const spins = parts.map(([build, x]) => {
+      const group = new THREE.Group(), s = new THREE.Group();
+      s.add(group); s.position.x = x; scene.add(s);
+      return build(group).then(() => { if (kind === 'duo') group.position.y = -2.45; return s; });
+    });
+    let spin = {rotation:{}, position:{}};
+    Promise.all(spins).then(list => {
+      spin = { set rotY(v){ list.forEach((s, i) => s.rotation.y = v + i*.25); }, set floatY(v){ list.forEach((s, i) => s.position.y = i ? v : -v); }, set tiltZ(v){ list.forEach(s => s.rotation.z = v); } };
+      el.classList.add('on'); dirty = true;
+    }).catch(() => { cv.remove(); });
 
     // drag to turn (horizontal), page still scrolls vertically on phones
-    let rot = -Math.PI/2 + .3, vel = reduce ? 0 : .0045, drag = null, last = 0, dirty = true, visible = false;
-    cv.addEventListener('pointerdown', e => { drag = {x:e.clientX, r:rot}; last = e.clientX; vel = 0; el.classList.add('touched'); cv.setPointerCapture(e.pointerId); });
-    cv.addEventListener('pointermove', e => { if (!drag) return; const w = cv.clientWidth; rot = drag.r + (e.clientX - drag.x)/w*Math.PI*1.6; vel = (e.clientX - last)/w*Math.PI*.5; last = e.clientX; dirty = true; });
-    const up = () => { if (!drag) return; drag = null; if (!reduce && Math.abs(vel) < .003) vel = .0045 * Math.sign(vel || 1); };
-    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    // turns by itself until the visitor takes it; after that it only moves by hand (drag or the arrows)
+    let rot = -Math.PI/2 + .3, vel = reduce ? 0 : .0045, drag = null, last = 0, dirty = true, visible = false, manual = false, target = null;
+    const take = () => { manual = true; vel = 0; target = null; el.classList.add('touched'); };
+    el.addEventListener('pointerdown', e => {
+      if (e.target.closest('.turn')) return;
+      take(); drag = {x:e.clientX, r:rot}; last = e.clientX;
+      try { el.setPointerCapture(e.pointerId); } catch(_){}
+    });
+    el.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const w = el.clientWidth;
+      rot = drag.r + (e.clientX - drag.x)/w*Math.PI*1.8;
+      vel = (e.clientX - last)/w*Math.PI*.9; last = e.clientX; dirty = true;
+    });
+    const up = () => { drag = null; };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
+    // arrow buttons: a quarter turn each press (also works with the keyboard)
+    [['‹', 1, 'دوّر لليسار'], ['›', -1, 'دوّر لليمين']].forEach(([s, dir, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'turn ' + (dir > 0 ? 'turn-l' : 'turn-r'); b.textContent = s; b.setAttribute('aria-label', label);
+      b.addEventListener('click', () => { take(); target = (target ?? rot) + dir*Math.PI/2; });
+      el.appendChild(b);
+    });
 
     function resize(){ const w = el.clientWidth, h = el.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); cam.aspect = w/h; cam.updateProjectionMatrix(); dirty = true; }
     new ResizeObserver(resize).observe(el); resize();
@@ -188,10 +218,13 @@
       requestAnimationFrame(frame);
       if (!visible) return;
       const t = clock.getElapsedTime();
-      if (!drag){ rot += vel; if (Math.abs(vel) > .0046) vel *= .96; }
-      spin.rotation.y = rot;
-      spin.position.y = reduce ? 0 : Math.sin(t*1.2)*.08;
-      spin.rotation.z = reduce ? 0 : Math.sin(t*.8)*.025;
+      if (!drag){
+        if (target !== null){ rot += (target - rot)*.12; if (Math.abs(target - rot) < .002){ rot = target; target = null; } }
+        else { rot += vel; if (manual) vel *= .92; else if (Math.abs(vel) > .0046) vel *= .96; }
+      }
+      spin.rotY = rot;
+      spin.floatY = reduce ? 0 : Math.sin(t*1.2)*.08;
+      spin.tiltZ = reduce ? 0 : Math.sin(t*.8)*.025;
       if (!reduce || drag || dirty){ renderer.render(scene, cam); dirty = false; }
     })();
   }

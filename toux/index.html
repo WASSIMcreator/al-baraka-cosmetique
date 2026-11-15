@@ -62,7 +62,12 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;heigh
 .hero h1 em{font-style:normal;color:var(--gold)}
 .hero .lead{font-size:clamp(17px,2.6vw,20px);color:#d8eef1;margin:14px 0 0}
 .hero-art{position:relative;border-radius:26px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(0,0,0,.7);aspect-ratio:1;max-width:520px;width:100%;margin-inline:auto}
-.hero-art img{width:100%;height:100%;object-fit:cover}
+.hero-art img{width:100%;height:100%;object-fit:cover;transition:opacity .6s}
+.hero-art.on{background:radial-gradient(60% 55% at 50% 58%,#22d3e6 0%,#0f6b78 38%,#0a3d46 70%,#062a31 100%)}
+.hero-art.on::before{content:"";position:absolute;left:50%;bottom:9%;width:70%;height:7%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.45),transparent)}
+.hero-art[data-3d] .hint{display:none}
+.hero-art[data-3d] .turn{top:16px;margin-top:0}
+.hero-art .price-tag{z-index:3;pointer-events:none}
 .price-tag{position:absolute;bottom:16px;left:16px;width:118px;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,var(--gold) 55%,#e0a646);color:var(--deep);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-8deg);box-shadow:0 0 0 7px rgba(247,201,120,.22),0 14px 30px rgba(0,0,0,.45)}
 .price-tag b{font-size:44px;line-height:.9;font-weight:900;font-family:var(--ff)}
 .price-tag small{font-weight:900;font-size:16px}
@@ -84,16 +89,21 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;heigh
 .prod .pic{position:relative;background:#cfd3d3;height:clamp(320px,88vw,430px);overflow:hidden}
 .prod .pic img{width:100%;height:100%;object-fit:cover}
 .prod .pic::after{content:"";position:absolute;inset:auto 0 0;height:30%;background:linear-gradient(180deg,transparent,rgba(10,61,70,.18))}
-.prod .pic canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y;cursor:grab;opacity:0;transition:opacity .6s}
+[data-3d].on{touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+[data-3d] canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .6s}
 .prod .pic.on{background:radial-gradient(70% 60% at 50% 42%,#ffffff 0%,#e3eeee 55%,#c3d6d6 100%)}
 .prod .pic.on::before{content:"";position:absolute;left:50%;bottom:7%;width:46%;height:6%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(4,28,33,.35),transparent)}
-.prod .pic.on canvas{opacity:1}
-.prod .pic.on img{opacity:0}
+[data-3d].on canvas{opacity:1}
+[data-3d].on>img{opacity:0}
 .prod .pic img{transition:opacity .6s}
-.prod .pic canvas:active{cursor:grabbing}
-.prod .hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:2;background:rgba(4,28,33,.78);color:#fff;font-size:13px;font-weight:700;padding:3px 14px;border-radius:99px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .4s}
-.prod .pic.on .hint{opacity:1}
-.prod .pic.touched .hint{opacity:0}
+[data-3d].on:active{cursor:grabbing}
+[data-3d] .turn{position:absolute;top:50%;z-index:2;width:44px;height:44px;margin-top:-22px;border:0;border-radius:50%;background:rgba(4,28,33,.78);color:#fff;font-size:28px;line-height:1;cursor:pointer;display:none;direction:ltr;unicode-bidi:isolate;align-items:center;justify-content:center;padding-bottom:4px}
+[data-3d].on .turn{display:flex}
+[data-3d] .turn-l{left:12px}[data-3d] .turn-r{right:12px}
+[data-3d] .turn:focus-visible{outline:3px solid var(--aqua);outline-offset:2px}
+[data-3d] .hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:2;background:rgba(4,28,33,.78);color:#fff;font-size:13px;font-weight:700;padding:3px 14px;border-radius:99px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .4s}
+[data-3d].on .hint{opacity:1}
+[data-3d].touched .hint{opacity:0}
 .prod .num{position:absolute;top:14px;inset-inline-start:14px;z-index:1;background:var(--deep);color:var(--gold);font-weight:900;font-size:15px;padding:2px 12px;border-radius:99px;direction:ltr}
 .prod .body{padding:22px 22px 24px}
 .prod .tag{display:inline-block;background:#e3f7fa;color:var(--teal2);font-weight:800;font-size:13px;padding:3px 12px;border-radius:99px}
@@ -210,9 +220,10 @@ footer a{color:var(--gold)}
       <span class="eyebrow">🌿 جديد · Pack الكحة + التدخين</span>
       <h1>قررتي تحبس <em>الكارو</em>؟<br>وباغي توقف <em>الكحة</em>؟</h1>
     </div>
-    <div class="hero-art">
+    <div class="hero-art" data-3d="duo">
       <img src="pack.jpg" alt="Pack سيروب الكحة 125ml + كبسولات Arrêter de fumer 60" width="1080" height="1080" fetchpriority="high">
       <div class="price-tag"><b>229</b><small>DH</small></div>
+      <span class="hint">👆 جرّ بصبعك باش تدوّرهم</span>
     </div>
     <div class="hb">
       <p class="lead">Pack AL BARAKA فيه جوج: <b>سيروب الكحة 125ml</b> بالعسل والزنجبيل باش يهدّن الحلق، و<b>60 كبسولة <span class="lat">Arrêter de fumer</span></b> ترافقك ف هاد المرحلة.</p>
@@ -239,7 +250,7 @@ footer a{color:var(--gold)}
     </div>
     <div class="prods">
       <article class="prod">
-        <div class="pic" data-3d="sirop"><img src="sirop.jpg" alt="سيروب الكحة 125ml" width="800" height="800" loading="lazy"><span class="num">01</span><span class="hint">👆 دوّر باش تشوف المكونات</span></div>
+        <div class="pic" data-3d="sirop"><img src="sirop.jpg" alt="سيروب الكحة 125ml" width="800" height="800" loading="lazy"><span class="num">01</span><span class="hint">👆 جرّ بصبعك باش تدوّرها</span></div>
         <div class="body">
           <span class="tag">💧 سيروب 125ml</span>
           <h3>سيروب الكحة · <span class="lat">Soulagement &amp; Réconfort</span></h3>
@@ -253,7 +264,7 @@ footer a{color:var(--gold)}
         </div>
       </article>
       <article class="prod">
-        <div class="pic" data-3d="caps"><img src="capsules.jpg" alt="Arrêter de fumer — 60 كبسولة" width="800" height="800" loading="lazy"><span class="num">02</span><span class="hint">👆 دوّر باش تشوف المكونات</span></div>
+        <div class="pic" data-3d="caps"><img src="capsules.jpg" alt="Arrêter de fumer — 60 كبسولة" width="800" height="800" loading="lazy"><span class="num">02</span><span class="hint">👆 جرّ بصبعك باش تدوّرها</span></div>
         <div class="body">
           <span class="tag">🚭 60 كبسولة</span>
           <h3 class="lat" style="text-align:right">Arrêter de fumer</h3>
@@ -373,6 +384,6 @@ f.addEventListener('submit', e => {
   location.href = waLink(msg);
 });
 </script>
-<script src="bottles3d.js" defer></script>
+<script src="bottles3d.js?v=7" defer></script>
 </body>
 </html>
