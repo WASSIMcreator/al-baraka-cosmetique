@@ -41,3 +41,8 @@ Hormones Féminines · 180 DH
 - So2al 3la l-mra nichan: "عندك الدورة ماشي منتظمة؟" / "عندك تكيس المبيض؟" → Meta katrefuzi (personal attributes).
 - "كيعاون على الحمل" / "كيداوي" / "مضمون" / "نتيجة ف 7 أيام".
 - Ma tkhdemch b "Hormines" f l-ktaba (ghalat f l-3olba), kteb "Hormones".
+
+## Variante photo (ad-femme.html)
+Fichiers: `albaraka-hormones-femme-feed-4x5.png`, `-square-1x1.png`, `-story-9x16.png`. Hook: "أيام الدورة ماشي خاصها تكون هكا 💔 · رجعي لراحتك بطريقة طبيعية".
+A/B: jerreb had l-variante m3a l-version produit (ad.html) f nafs l-adset, w khlli li 3ndha CPL 7sen.
+Tswira l-asliya sghira (735×919), ya3ni f 1080 katban chwiya mdabbla. Ila 3ndek nsakha kbira, n3awdo l-export.
