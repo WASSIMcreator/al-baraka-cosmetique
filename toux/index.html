@@ -81,8 +81,10 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;heigh
 
 .prods{display:grid;gap:22px}
 .prod{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 20px 50px -30px rgba(10,61,70,.35)}
-.prod .pics{display:grid;grid-template-columns:1fr 1fr;background:linear-gradient(180deg,#eef2f2,#dfe6e6)}
-.prod .pics img{width:100%;aspect-ratio:1;object-fit:cover}
+.prod .pic{position:relative;background:#cfd3d3;aspect-ratio:1;max-height:420px;overflow:hidden}
+.prod .pic img{width:100%;height:100%;object-fit:cover}
+.prod .pic::after{content:"";position:absolute;inset:auto 0 0;height:30%;background:linear-gradient(180deg,transparent,rgba(10,61,70,.18))}
+.prod .num{position:absolute;top:14px;inset-inline-start:14px;z-index:1;background:var(--deep);color:var(--gold);font-weight:900;font-size:15px;padding:2px 12px;border-radius:99px;direction:ltr}
 .prod .body{padding:22px 22px 24px}
 .prod .tag{display:inline-block;background:#e3f7fa;color:var(--teal2);font-weight:800;font-size:13px;padding:3px 12px;border-radius:99px}
 .prod h3{font-size:24px;margin:10px 0 6px}
@@ -110,13 +112,23 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;heigh
 .sum img{width:84px;height:84px;border-radius:14px;object-fit:cover}
 .sum b{display:block;font-size:17px;line-height:1.4}
 .sum small{color:var(--muted)}
-.qty{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.qty label{position:relative;cursor:pointer}
+.qty{display:grid;gap:10px;margin-bottom:16px}
+.qty label{position:relative;cursor:pointer;display:block}
 .qty input{position:absolute;opacity:0}
-.qty span{display:block;text-align:center;border:2px solid var(--line);border-radius:14px;padding:8px 4px;font-weight:800;line-height:1.35}
-.qty span small{display:block;font-weight:700;color:var(--muted);font-size:13px}
-.qty input:checked+span{border-color:var(--ember);background:#fff3ea}
-.qty input:focus-visible+span{outline:3px solid var(--aqua);outline-offset:2px}
+.qty .o{position:relative;display:flex;align-items:center;gap:12px;border:2px solid var(--line);border-radius:16px;padding:14px 16px;transition:border-color .2s,background .2s}
+.qty .dot{flex:0 0 22px;height:22px;border-radius:50%;border:2px solid #c9d6d4;position:relative}
+.qty .t{flex:1;line-height:1.35}
+.qty .t b{display:block;font-size:17px}
+.qty .t small{color:var(--muted);font-size:13.5px;font-weight:600}
+.qty .pr{text-align:left;line-height:1.2}
+.qty .pr b{display:block;font-size:21px;font-weight:900;color:var(--ink)}
+.qty .pr s{color:#9aa8aa;font-size:14px;font-weight:700}
+.qty .save{position:absolute;top:-12px;inset-inline-end:14px;font-style:normal;background:var(--ember);color:#fff;font-weight:800;font-size:12.5px;padding:1px 12px;border-radius:99px}
+.qty input:checked+.o{border-color:var(--ember);background:#fff5ee}
+.qty input:checked+.o .dot{border-color:var(--ember)}
+.qty input:checked+.o .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--ember)}
+.qty input:checked+.o .pr b{color:var(--ember2)}
+.qty input:focus-visible+.o{outline:3px solid var(--aqua);outline-offset:2px}
 .field{display:block;margin-bottom:12px}
 .field span{display:block;font-weight:700;font-size:14px;margin-bottom:4px}
 .field input{width:100%;border:1.5px solid #e7d9c6;border-radius:14px;padding:13px 14px;font-size:16px;background:#fffdf9}
@@ -186,7 +198,7 @@ footer a{color:var(--gold)}
   <div class="wrap">
     <div class="ht">
       <span class="eyebrow">🌿 جديد · Pack الكحة + التدخين</span>
-      <h1>قررتي تحبس <em>الكارو</em>؟<br>وزادت عليك <em>الكحة</em>؟</h1>
+      <h1>قررتي تحبس <em>الكارو</em>؟<br>وباغي توقف <em>الكحة</em>؟</h1>
     </div>
     <div class="hero-art">
       <img src="pack.jpg" alt="Pack سيروب الكحة 125ml + كبسولات Arrêter de fumer 60" width="1080" height="1080" fetchpriority="high">
@@ -217,7 +229,7 @@ footer a{color:var(--gold)}
     </div>
     <div class="prods">
       <article class="prod">
-        <div class="pics"><img src="sirop.jpg" alt="سيروب الكحة 125ml — الوجه" loading="lazy"><img src="sirop-dos.jpg" alt="سيروب الكحة — المكونات" loading="lazy"></div>
+        <div class="pic"><img src="sirop.jpg" alt="سيروب الكحة 125ml" width="800" height="800" loading="lazy"><span class="num">01</span></div>
         <div class="body">
           <span class="tag">💧 سيروب 125ml</span>
           <h3>سيروب الكحة · <span class="lat">Soulagement &amp; Réconfort</span></h3>
@@ -231,7 +243,7 @@ footer a{color:var(--gold)}
         </div>
       </article>
       <article class="prod">
-        <div class="pics"><img src="capsules.jpg" alt="Arrêter de fumer — 60 كبسولة" loading="lazy"><img src="capsules-dos.jpg" alt="Arrêter de fumer — المكونات" loading="lazy"></div>
+        <div class="pic"><img src="capsules.jpg" alt="Arrêter de fumer — 60 كبسولة" width="800" height="800" loading="lazy"><span class="num">02</span></div>
         <div class="body">
           <span class="tag">🚭 60 كبسولة</span>
           <h3 class="lat" style="text-align:right">Arrêter de fumer</h3>
@@ -276,9 +288,8 @@ footer a{color:var(--gold)}
         <div><b>Pack سيروب الكحة 125ml + <span class="lat">Arrêter de fumer</span> 60 كبسولة</b><small>229 DH للـPack · الدفع عند الاستلام</small></div>
       </div>
       <div class="qty" role="radiogroup" aria-label="شحال من Pack">
-        <label><input type="radio" name="q" value="1" checked><span>1 Pack<small>229 DH</small></span></label>
-        <label><input type="radio" name="q" value="2"><span>2 Packs<small>458 DH</small></span></label>
-        <label><input type="radio" name="q" value="3"><span>3 Packs<small>687 DH</small></span></label>
+        <label><input type="radio" name="q" value="1" checked><span class="o"><i class="dot"></i><span class="t"><b>Pack واحد</b><small>سيروب + 60 كبسولة</small></span><span class="pr"><b class="lat">229 DH</b></span></span></label>
+        <label><input type="radio" name="q" value="2"><span class="o"><em class="save">وفّر 30 DH</em><i class="dot"></i><span class="t"><b>جوج Packs</b><small>2 سيروب + 2 علب كبسولات</small></span><span class="pr"><b class="lat">428 DH</b><s class="lat">458 DH</s></span></span></label>
       </div>
       <label class="field"><span>الاسم الكامل</span><input name="nom" autocomplete="name" required placeholder="مثلاً: يوسف العلوي"></label>
       <label class="field"><span>رقم الهاتف</span><input name="tel" type="tel" inputmode="tel" autocomplete="tel" required placeholder="06XXXXXXXX" pattern="^(\+?212|0)\s?[5-7](\s?\d){8}$" dir="ltr" style="text-align:right"></label>
@@ -327,8 +338,10 @@ document.querySelectorAll('[data-wa]').forEach(a => { a.href = waLink(a.dataset.
 document.querySelectorAll('[data-ev]').forEach(a => a.addEventListener('click', () => track(a.dataset.ev)));
 
 const f = document.getElementById('f'), tot = document.getElementById('tot'), err = document.getElementById('err');
+const PRICES = {1:229, 2:428};
 const qty = () => +f.q.value;
-f.addEventListener('change', () => { tot.textContent = (qty()*CONFIG.price) + ' DH'; });
+const stickyP = document.querySelector('.sticky .p b');
+f.addEventListener('change', () => { tot.textContent = stickyP.textContent = PRICES[qty()] + ' DH'; });
 
 /* UTM kept with the order so you know which ad sold */
 const qs = new URLSearchParams(location.search);
@@ -339,11 +352,11 @@ f.addEventListener('submit', e => {
   const nom = f.nom.value.trim(), tel = f.tel.value.trim(), ville = f.ville.value.trim();
   if (!nom || !ville || !f.tel.checkValidity() || !tel){ err.textContent = 'عافاك عمّر الاسم، رقم هاتف صحيح (06/07…) والمدينة.'; return; }
   err.textContent = '';
-  const q = qty(), total = q*CONFIG.price;
+  const q = qty(), total = PRICES[q];
   const msg = ['🛒 طلب جديد · AL BARAKA',
     'المنتوج: ' + CONFIG.name,
     'الكمية: ' + q + ' Pack',
-    'المجموع: ' + total + ' DH (الدفع عند الاستلام)',
+    'المجموع: ' + total + ' DH' + (q===2 ? ' (عرض 2 Packs، وفرتي 30 DH)' : '') + ' · الدفع عند الاستلام',
     'الاسم: ' + nom, 'الهاتف: ' + tel, 'المدينة/العنوان: ' + ville,
     src ? 'المصدر: ' + src : ''].filter(Boolean).join('\n');
   track('Lead',{value:total,currency:'MAD'});
