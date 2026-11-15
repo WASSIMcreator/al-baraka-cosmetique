@@ -23,20 +23,39 @@
     t.encoding = THREE.sRGBEncoding; t.wrapS = THREE.RepeatWrapping; t.anisotropy = MAX_ANISO;
     return t;
   }
+  // drawBack: a function that paints the back half, or the URL of a sharp enough photo of the back
   async function paintLabel(front, drawBack, W, H){
     const f = await img(front);
+    const b = typeof drawBack === 'string' ? await img(drawBack) : null;
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const ctx = cv.getContext('2d');
     const half = W/2;
-    const m = f.width*.035, iw = f.width - 2*m;          // skip the photo edges (background shows there)
-    for (let x = 0; x < half; x++){
-      const th = (x/half - .5) * Math.PI;                  // -90°..90°
-      const sx = m + (Math.sin(th)*.5 + .5) * iw;
-      const sw = Math.max(1, Math.cos(th) * iw/half * Math.PI/2);
-      ctx.drawImage(f, Math.min(m+iw-1, sx), 0, Math.max(1, Math.min(sw, m+iw - sx)), f.height, x, 0, 1.6, H);
-    }
-    ctx.save(); ctx.translate(half, 0); drawBack(ctx, half, H); ctx.restore();
+    const unproject = (im, x0) => {
+      const m = im.width*.035, iw = im.width - 2*m;      // skip the photo edges (background shows there)
+      for (let x = 0; x < half; x++){
+        const th = (x/half - .5) * Math.PI;                // -90°..90°
+        const sx = m + (Math.sin(th)*.5 + .5) * iw;
+        const sw = Math.max(1, Math.cos(th) * iw/half * Math.PI/2);
+        ctx.drawImage(im, Math.min(m+iw-1, sx), 0, Math.max(1, Math.min(sw, m+iw - sx)), im.height, x0 + x, 0, 1.6, H);
+      }
+    };
+    unproject(f, 0);
+    if (b) unproject(b, half);
+    else { ctx.save(); ctx.translate(half, 0); drawBack(ctx, half, H); ctx.restore(); }
     return cv;
+  }
+
+  /* hormones jar (white jar, dark label). Textures live next to the page that uses it. */
+  async function buildHorm(group){
+    const white = new THREE.MeshStandardMaterial({color:0xf4f4f2, roughness:.38, metalness:0});
+    const pts = [[0,0],[.95,0],[1,.07],[1,2.95],[.97,3.05],[.88,3.11],[.8,3.15],[.8,3.2]].map(([x,y]) => new THREE.Vector2(x, y));
+    group.add(new THREE.Mesh(new THREE.LatheGeometry(pts, 96), white));
+    const tex = await labelTexture('tex-f.jpg', 'tex-b.jpg', 2048, 1384);
+    const label = new THREE.Mesh(new THREE.CylinderGeometry(1.01, 1.01, 2.7, 128, 1, true),
+      new THREE.MeshLambertMaterial({map:tex, emissive:0xffffff, emissiveMap:tex, emissiveIntensity:.3}));
+    label.position.y = .13 + 1.35; group.add(label);
+    const cap = ridgedCap(.8, .62, white, 56); cap.position.y = 3.18 + .31; group.add(cap);
+    group.position.y = -1.9;
   }
   let MAX_ANISO = 4;
   const FONT = 'Arial, Helvetica, sans-serif';
@@ -165,14 +184,15 @@
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(30, 1, .1, 100);
     const kind = el.dataset['3d'];
-    cam.position.set(0, .1, kind === 'sirop' ? 11.4 : kind === 'duo' ? 16 : 9.2);
+    cam.position.set(0, .1, kind === 'sirop' ? 11.4 : kind === 'duo' ? 16 : kind === 'horm' ? 11.2 : 9.2);
     scene.add(new THREE.HemisphereLight(0xffffff, 0x7f9a9a, .55));
     const key = new THREE.DirectionalLight(0xffffff, .75); key.position.set(4, 5, 6); scene.add(key);
     const fill = new THREE.DirectionalLight(0xbfe9f0, .3); fill.position.set(-5, 1, 3); scene.add(fill);
     const rim = new THREE.DirectionalLight(0xffffff, .5); rim.position.set(-2, 3, -6); scene.add(rim);
 
     // one turning group per product; 'duo' = jar on the left, bottle on the right, standing on the same floor
-    const parts = kind === 'duo' ? [[buildCaps, -1.5], [buildSirop, 1.5]] : [[kind === 'sirop' ? buildSirop : buildCaps, 0]];
+    const builders = {sirop:buildSirop, caps:buildCaps, horm:buildHorm};
+    const parts = kind === 'duo' ? [[buildCaps, -1.5], [buildSirop, 1.5]] : [[builders[kind] || buildCaps, 0]];
     const spins = parts.map(([build, x]) => {
       const group = new THREE.Group(), s = new THREE.Group();
       s.add(group); s.position.x = x; scene.add(s);
