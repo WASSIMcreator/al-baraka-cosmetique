@@ -129,7 +129,7 @@ const DYN = {
   ar:{box1:'علبة واحدة',boxN:n=>`${n} علب`,perBox:'للعلبة',save:'وفّر',add:'زيد للسلة',added:'تزادت للسلة ✓',size:'المقاس',remove:'حيّد',isNew:'جديد',instead:'بدل',
       choose:'اختار هاد العرض',empty:'السلة خاوية. بدا بـ FOCUS:',addFocus:'زيد FOCUS',
       errPhone:'رقم الهاتف ماشي صحيح (مثال: 0612345678)',errFields:'عمّر الاسم، الهاتف والمدينة',errEmpty:'زيد شي منتج للسلة أولاً',
-      sent:'تفتحات رسالة واتساب، صيفطها باش نأكدو ✓',lang:'Français',items:'منتجات',
+      sent:'تفتحات رسالة واتساب، صيفطها باش نأكدو ✓',sending:'جاري الإرسال…',moSent:'شكراً! توصلنا بالطلب ديالك، غادي نعيطو ليك باش نأكدو ✓',lang:'Français',items:'منتجات',
       li:['التوصيل مجاني','الدفع عند الاستلام'],li2:'وفّر',li3:'تكفي لمدة أطول',
       mTitle:'طلب جديد من موقع AL BARAKA',mName:'الاسم',mPhone:'الهاتف',mCity:'المدينة',mAddr:'العنوان',mNote:'ملاحظة',mItems:'الطلب',mTotal:'المجموع',mPay:'الدفع عند الاستلام · التوصيل مجاني',mRef:'المصدر',
       b1:['الدفع عند الاستلام','التوصيل مجاني','FOCUS · 60 كبسولة','2 علب بـ349 درهم','3 علب بـ479 درهم'],
@@ -137,7 +137,7 @@ const DYN = {
   fr:{box1:'1 boîte',boxN:n=>`${n} boîtes`,perBox:'la boîte',save:'Économisez',add:'Ajouter au panier',added:'Ajouté au panier ✓',size:'Taille',remove:'Retirer',isNew:'NOUVEAU',instead:'au lieu de',
       choose:'Choisir cette offre',empty:'Panier vide. Commencez par FOCUS :',addFocus:'Ajouter FOCUS',
       errPhone:'Numéro invalide (ex : 0612345678)',errFields:'Indiquez votre nom, téléphone et ville',errEmpty:'Ajoutez d’abord un produit',
-      sent:'WhatsApp est ouvert : envoyez le message pour confirmer ✓',lang:'العربية',items:'articles',
+      sent:'WhatsApp est ouvert : envoyez le message pour confirmer ✓',sending:'Envoi en cours…',moSent:'Merci ! Votre commande est bien reçue, nous vous appelons pour confirmer ✓',lang:'العربية',items:'articles',
       li:['Livraison gratuite','Paiement à la livraison'],li2:'Économisez',li3:'Dure plus longtemps',
       mTitle:'Nouvelle commande — site AL BARAKA',mName:'Nom',mPhone:'Téléphone',mCity:'Ville',mAddr:'Adresse',mNote:'Note',mItems:'Commande',mTotal:'Total',mPay:'Paiement à la livraison · Livraison gratuite',mRef:'Source',
       b1:['PAIEMENT À LA LIVRAISON','LIVRAISON GRATUITE','FOCUS · 60 GÉLULES','2 BOÎTES À 349 DH','3 BOÎTES À 479 DH'],
@@ -423,24 +423,53 @@ $('#lang').onclick = () => { lang = lang === 'ar' ? 'fr' : 'ar'; applyLang(); };
 const normPhone = v => v.replace(/[\s.\-()]/g,'');
 const phoneOk = v => /^(?:\+?212|0)[5-7]\d{8}$/.test(normPhone(v));
 $('#orderForm').addEventListener('input', e => { if (e.target.name) e.target.removeAttribute('aria-invalid'); });
-$('#orderForm').addEventListener('submit', e => {
+/* Produits Marque Online avec landing page : la commande part directement dans le compte affilié (ref 7574).
+   FOCUS n'a pas de landing page chez Marque Online, il reste sur WhatsApp. */
+const MARQUE = { endpoint: 'https://marqueonline.ma/api/order/landing-page', ref: '7574', slugs: { melatonin: 'melatonine-60gelules' } };
+let sending = false;
+$('#orderForm').addEventListener('submit', async e => {
   e.preventDefault();
+  if (sending) return;
   const f = e.target, msg = $('#formMsg'); msg.className = 'err';
   const val = n => (f.elements[n].value || '').trim();
   if (!cart.length) setFocusQty(offer);
   let bad = null;
   ['name','phone','city'].forEach(n => { const ok = n === 'phone' ? phoneOk(val(n)) : val(n).length > 1; f.elements[n].setAttribute('aria-invalid', !ok); if (!ok && !bad) bad = n; });
   if (bad){ msg.textContent = bad === 'phone' && val('phone') ? t('errPhone') : t('errFields'); f.elements[bad].focus(); return; }
-  const lines = cart.map(i => { const p = byId(i.id); const nm = TIERED.includes(i.id) ? tierName(i) : `${p.name[lang]}${i.size ? ' — '+t('size')+' '+i.size : ''} × ${i.qty}`; return `• ${nm} = ${fmt(itemTotal(i))}`; });
+  track('Lead', {value:cartTotal(), currency:CONFIG.currency, content_ids:cart.map(i=>i.id), num_items:cartCount()});
+
+  // 1) Marque Online items (Melatonin): one order per product, the offer (2 or 3 boxes) goes in the address note
+  const moItems = cart.filter(i => MARQUE.slugs[i.id]);
+  let moOk = true;
+  if (moItems.length){
+    sending = true; msg.className = 'err ok'; msg.textContent = t('sending');
+    for (const i of moItems){
+      const fd = new FormData();
+      fd.append('Nom', val('name'));
+      fd.append('Téléphone', normPhone(val('phone')));
+      fd.append('Ville', val('city'));
+      fd.append('Adresse', [val('address') || val('city'), i.qty > 1 ? 'عرض ' + i.qty + ' علب: ' + itemTotal(i) + ' DH' : '', val('notes')].filter(Boolean).join(' — '));
+      fd.append('slug', MARQUE.slugs[i.id]);
+      fd.append('aff_ref', MARQUE.ref);
+      try { await fetch(MARQUE.endpoint, { method: 'POST', body: fd, mode: 'no-cors' }); } catch(_) { moOk = false; }
+    }
+    sending = false;
+  }
+  // 2) everything else (FOCUS, packs, clothes) still goes to WhatsApp; if Marque Online failed, the whole order does
+  const waItems = moOk ? cart.filter(i => !MARQUE.slugs[i.id]) : cart;
+  if (!waItems.length){ msg.className = 'err ok'; msg.textContent = t('moSent'); return; }
+  const waTotal = waItems.reduce((s,i) => s + itemTotal(i), 0);
+  const lines = waItems.map(i => { const p = byId(i.id); const nm = TIERED.includes(i.id) ? tierName(i) : `${p.name[lang]}${i.size ? ' — '+t('size')+' '+i.size : ''} × ${i.qty}`; return `• ${nm} = ${fmt(itemTotal(i))}`; });
   const text = [
     `*${t('mTitle')}*`, '',
     `${t('mName')}: ${val('name')}`, `${t('mPhone')}: ${normPhone(val('phone'))}`, `${t('mCity')}: ${val('city')}`,
     val('address') ? `${t('mAddr')}: ${val('address')}` : null, val('notes') ? `${t('mNote')}: ${val('notes')}` : null, '',
-    `*${t('mItems')}:*`, ...lines, '', `*${t('mTotal')}: ${fmt(cartTotal())}*`, t('mPay'),
+    `*${t('mItems')}:*`, ...lines, '', `*${t('mTotal')}: ${fmt(waTotal)}*`, t('mPay'),
     ref ? `${t('mRef')}: ${ref}` : null
   ].filter(l => l !== null).join('\n');
-  track('Lead', {value:cartTotal(), currency:CONFIG.currency, content_ids:cart.map(i=>i.id), num_items:cartCount()});
-  window.open('https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+  const waUrl = 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(text);
+  // after an await the browser may block a new tab, so then open WhatsApp in the same tab
+  if (moItems.length) location.href = waUrl; else window.open(waUrl, '_blank', 'noopener');
   msg.className = 'err ok'; msg.textContent = t('sent');
 });
 
