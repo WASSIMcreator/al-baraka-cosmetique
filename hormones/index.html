@@ -216,9 +216,7 @@ footer a{color:var(--gold)}
     <div class="hb">
       <p class="lead">مكمل غذائي طبيعي فيه <b>4 نباتات</b> معروفين عند النساء: <b>فيتكس، ماكا، إيزوفلافون الصوجا وأشواغاندا</b>. كيساعد على التوازن الهرموني وعلى راحتك كل نهار وكل شهر.</p>
       <div class="buybox">
-        <a class="btn btn-fire" href="#order" data-ev="InitiateCheckout">اطلبي العلبة · <span class="lat">180 DH</span></a>
-        <a class="btn btn-wa" href="#" data-wa="سلام، بغيت نعرف كثر على Hormones Féminines" data-ev="Contact">💬 سولي ف WhatsApp</a>
-      </div>
+        <a class="btn btn-fire" href="#order" data-ev="InitiateCheckout">اطلبي العلبة · <span class="lat">180 DH</span></a>      </div>
       <div class="trust">
         <div><i>💵</i>الدفع عند الاستلام</div>
         <div><i>🚚</i>التوصيل مجاني</div>
@@ -300,9 +298,7 @@ footer a{color:var(--gold)}
     <div class="form done" id="done" hidden>
       <div style="font-size:54px;text-align:center">✅</div>
       <h3 style="text-align:center;font-size:26px;margin:6px 0 4px">توصلنا بالطلب ديالك!</h3>
-      <p style="text-align:center;color:var(--muted);margin:0 0 16px">غادي نعيطو ليك قريب باش نأكدو العنوان. خلي التيليفون قريب منك 📞</p>
-      <a class="btn btn-wa" style="width:100%" id="doneWa" href="#" target="_blank" rel="noopener">💬 بغيتي تسرعي؟ صيفطي لينا ف WhatsApp</a>
-    </div>
+      <p style="text-align:center;color:var(--muted);margin:0 0 16px">غادي نعيطو ليك قريب باش نأكدو العنوان. خلي التيليفون قريب منك 📞</p>    </div>
   </div>
 </section>
 
@@ -380,7 +376,6 @@ f.addEventListener('submit', async e => {
   track('Lead', {value: total, currency: 'MAD'});
   track('Purchase', {value: total, currency: 'MAD', content_name: CONFIG.name, num_items: q});
   if (!sent){ location.href = waLink(msg); return; }      // network problem: the order still reaches you on WhatsApp
-  document.getElementById('doneWa').href = waLink(msg);
   f.hidden = true; document.getElementById('done').hidden = false;
   document.getElementById('done').scrollIntoView({block: 'center'});
 });
