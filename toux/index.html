@@ -345,7 +345,7 @@ footer a{color:var(--gold)}
 </div>
 
 <script>
-const CONFIG = { whatsapp:'212706828446', metaPixel:'', tiktokPixel:'', price:229, name:'Pack سيروب الكحة 125ml + Arrêter de fumer 60 كبسولة' };
+const CONFIG = { whatsapp:'212706828446', metaPixel:'4547426528828820', tiktokPixel:'', price:229, name:'Pack سيروب الكحة 125ml + Arrêter de fumer 60 كبسولة' };
 
 /* pixels (empty = off) */
 if (CONFIG.metaPixel){
@@ -381,6 +381,7 @@ f.addEventListener('submit', e => {
     'الاسم: ' + nom, 'الهاتف: ' + tel, 'المدينة/العنوان: ' + ville,
     src ? 'المصدر: ' + src : ''].filter(Boolean).join('\n');
   track('Lead',{value:total,currency:'MAD'});
+  track('Purchase',{value:total,currency:'MAD',content_name:CONFIG.name,num_items:q});
   location.href = waLink(msg);
 });
 </script>
