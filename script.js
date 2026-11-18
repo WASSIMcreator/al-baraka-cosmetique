@@ -4,7 +4,7 @@
    ===================================================================== */
 const CONFIG = {
   whatsapp: '212706828446',
-  metaPixel: '',     // Facebook / Instagram : votre Pixel ID, ex '1234567890123456'
+  metaPixel: '4547426528828820',     // Facebook / Instagram : votre Pixel ID, ex '1234567890123456'
   tiktokPixel: '',   // TikTok : votre Pixel ID
   currency: 'MAD',
   adMode: true       // true = les visiteurs venant d'une pub (utm / fbclid / ttclid) ne voient que FOCUS
@@ -437,6 +437,7 @@ $('#orderForm').addEventListener('submit', async e => {
   ['name','phone','city'].forEach(n => { const ok = n === 'phone' ? phoneOk(val(n)) : val(n).length > 1; f.elements[n].setAttribute('aria-invalid', !ok); if (!ok && !bad) bad = n; });
   if (bad){ msg.textContent = bad === 'phone' && val('phone') ? t('errPhone') : t('errFields'); f.elements[bad].focus(); return; }
   track('Lead', {value:cartTotal(), currency:CONFIG.currency, content_ids:cart.map(i=>i.id), num_items:cartCount()});
+  track('Purchase', {value:cartTotal(), currency:CONFIG.currency, content_ids:cart.map(i=>i.id), content_type:'product', num_items:cartCount()});
 
   // 1) Marque Online items (Melatonin): one order per product, the offer (2 or 3 boxes) goes in the address note
   const moItems = cart.filter(i => MARQUE.slugs[i.id]);
