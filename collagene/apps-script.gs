@@ -60,12 +60,12 @@ function doPost(e) {
         items: [{ productId: PRODUCT_ID, quantity: q }]
       })
     });
-    var code = res.getResponseCode(), body = res.getContentText().slice(0, 400);
+    var code = res.getResponseCode(), body = res.getContentText();
     if (code >= 200 && code < 300) {
-      orderNumber = (JSON.parse(body).orderNumber) || 'OK';
+      try { orderNumber = JSON.parse(body).orderNumber || 'OK'; } catch (_) { orderNumber = 'OK'; }
       status = orderNumber;
     } else {
-      status = 'ERREUR ' + code; detail = body;
+      status = 'ERREUR ' + code; detail = body.slice(0, 400);
     }
   }
 
