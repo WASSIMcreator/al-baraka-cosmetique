@@ -462,7 +462,9 @@ f.addEventListener('submit', async e => {
   const ville = resolveCity(villeRaw);
   err.textContent = '';
   const q = qty(), total = CONFIG.prices[q];
-  const eventId = 'alb-' + orderId + '-pur';
+  // Same event_id for the browser Lead and the server CAPI Lead: Meta keeps one of the two.
+  // It stays the same if the client retries this order, and changes only for a new order.
+  const eventId = 'lead_' + orderId;
   submitBtn.disabled = true;
   submitBtn.textContent = 'جاري الإرسال…';
 
@@ -489,7 +491,7 @@ f.addEventListener('submit', async e => {
         fbp: getCookie('_fbp'),
         fbc: getFbc(),
         event_source_url: location.href,
-        client_user_agent: navigator.userAgent
+        user_agent: navigator.userAgent
       })
     });
     const j = await r.json();
@@ -505,15 +507,9 @@ f.addEventListener('submit', async e => {
     return;
   }
 
-  // Browser Purchase ONLY after Apps Script confirms save; exact same eventID as server CAPI
-  track('Purchase', {
-    value: total,
-    currency: 'MAD',
-    content_ids: [CONFIG.contentId],
-    content_name: CONFIG.name,
-    content_type: 'product',
-    num_items: q
-  }, { eventID: eventId });
+  // Browser LEAD only, once the Apps Script has saved the order. NEVER Purchase here: it is cash on
+  // delivery, nobody has paid yet. The Purchase is sent by the script when the row's statut becomes Livré.
+  track('Lead', { currency: 'MAD', value: total }, { eventID: eventId });
 
   orderId = newOrderId();
   f.hidden = true;

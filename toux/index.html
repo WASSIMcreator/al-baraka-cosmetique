@@ -381,7 +381,7 @@ f.addEventListener('submit', e => {
     'الاسم: ' + nom, 'الهاتف: ' + tel, 'المدينة/العنوان: ' + ville,
     src ? 'المصدر: ' + src : ''].filter(Boolean).join('\n');
   track('Lead',{value:total,currency:'MAD'});
-  track('Purchase',{value:total,currency:'MAD',content_name:CONFIG.name,num_items:q});
+  // No Purchase here: cash on delivery, the client has not paid yet.
   location.href = waLink(msg);
 });
 </script>

@@ -374,7 +374,7 @@ f.addEventListener('submit', async e => {
   let sent = false;
   try { await fetch(CONFIG.marque.endpoint, { method: 'POST', body: fd, mode: 'no-cors' }); sent = true; } catch(_) {}
   track('Lead', {value: total, currency: 'MAD'});
-  track('Purchase', {value: total, currency: 'MAD', content_name: CONFIG.name, num_items: q});
+  // No Purchase here: cash on delivery, the client has not paid yet.
   if (!sent){ location.href = waLink(msg); return; }      // network problem: the order still reaches you on WhatsApp
   f.hidden = true; document.getElementById('done').hidden = false;
   document.getElementById('done').scrollIntoView({block: 'center'});

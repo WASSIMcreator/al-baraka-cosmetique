@@ -2,8 +2,11 @@
  * AL BARAKA · Collagène marin 25 gommes
  * Receives orders from collagene/index.html, writes them FIRST to the
  * "Commandes Collagène" sheet (guaranteed backup), then creates them in
- * COD Marque Online (app.codmarqueonline.ma) and sends a deduplicated
- * server-side Purchase event to Meta Conversions API (Pixel 4547426528828820).
+ * COD Marque Online (app.codmarqueonline.ma) and sends Meta Conversions API
+ * events (Pixel 4547426528828820):
+ *   - New order (doPost)            -> LEAD only (same event_id as the browser Lead).
+ *   - "statut" set to Livré by hand -> PURCHASE, once per row (handleStatusEdit).
+ * A new order is never a Purchase: it is cash on delivery, nobody has paid yet.
  *
  * Setup (once):
  *  1. Open the Google Sheet > Extensions > Apps Script, paste this file.
@@ -11,14 +14,21 @@
  *       - MO_API_KEY = <your Marque Online API key>
  *       - META_CAPI_TOKEN = <your Meta CAPI access token for Pixel 4547426528828820>
  *       - META_TEST_EVENT_CODE = <optional TEST12345 while testing; delete when live>
- *  3. Deploy > Manage deployments > pencil icon > Version: New version > Deploy.
+ *  3. Run setupTracking() once (adds the tracking columns and the statut list).
+ *  4. Triggers (clock icon) > Add trigger > handleStatusEdit / Head / From spreadsheet / On edit.
+ *  5. Deploy > Manage deployments > pencil icon > Version: New version > Deploy.
  */
 
 var API = 'https://api.codmarqueonline.ma/api/merchant-api';
 var PRODUCT_ID = '2d07949a-cfb2-4710-91c4-1f41ddd29e5c'; // كولاجين بحري Collagène Marin 25 gommes
 var PRICES = { 1: 195, 2: 350 };                            // server-authoritative pricing
 var SHEET_NAME = 'Commandes Collagène';
+// CAPI_Status (column 12) = last Meta answer for the row. On rows made by the OLD script it starts
+// with "OK": that old script already sent a Purchase at order time, so those rows never send another.
 var HEAD = ['Date', 'Réf', 'Nom', 'Téléphone', 'Ville', 'Adresse', 'Boîtes', 'Total DH', 'Source', 'Marque Online', 'Détail', 'CAPI_Status'];
+// Tracking columns, added after the last used column when missing (existing columns never move).
+var TRACK_COLS = ['external_reference', 'statut', 'fbp', 'fbc', 'user_agent', 'event_source_url', 'lead_sent', 'purchase_sent', 'purchase_sent_at'];
+var STATUTS = ['Nouveau', 'Confirmé', 'Expédié', 'Livré', 'Retour', 'Annulé'];
 var MAX_PER_PHONE = 3;    // orders per phone in 6 hours (anti-spam)
 var MAX_PER_HOUR = 120;   // global safety cap per hour across all phones
 var META_PIXEL_ID = '4547426528828820';
@@ -128,7 +138,11 @@ function doPost(e) {
   var q = o.q == 2 ? 2 : 1;
   var total = PRICES[q];
   var ref = 'ALB-' + String(o.id || '').replace(/[^\w-]/g, '').slice(0, 30);
-  var eventId = clean_(o.event_id, 80) || (ref + '-pur');
+  // Browser Lead's event_id: the server Lead must use the SAME one so Meta counts one Lead.
+  var eventId = clean_(o.event_id, 80).replace(/[^\w-]/g, '') || ('lead_' + ref);
+  var fbp = clean_(o.fbp, 120), fbc = clean_(o.fbc, 300);
+  var userAgent = clean_(o.user_agent || o.client_user_agent, 500); // client_user_agent = pages still cached
+  var sourceUrl = clean_(o.event_source_url, 500) || DEFAULT_SOURCE_URL;
 
   if (nom.length < 2 || !phone.valid || !ville || adresse.length < 3 || ref.length < 8) {
     return out({ ok: false, error: 'missing fields' });
@@ -161,6 +175,16 @@ function doPost(e) {
     var sh = sheet_();
     sh.appendRow([new Date(), ref, nom, "'" + phone.local, displayCity, adresse, q, total, src, 'EN COURS', '', '']);
     rowIndex = sh.getLastRow();
+    // Tracking data kept on the row, for the Purchase sent later on delivery (same person, same click).
+    // A failure here must never cost the order: the row above is already saved.
+    try {
+      var c = trackCols_(sh);
+      sh.getRange(rowIndex, c.statut).setDataValidation(statutRule_()).setValue('Nouveau');
+      setCells_(sh, rowIndex, c, {
+        external_reference: ref, fbp: safe_(fbp), fbc: safe_(fbc), user_agent: safe_(userAgent),
+        event_source_url: safe_(sourceUrl), lead_sent: false, purchase_sent: false
+      });
+    } catch (trackErr) { console.warn('tracking columns: ' + trackErr); }
   } finally {
     lock.releaseLock();
   }
@@ -197,18 +221,10 @@ function doPost(e) {
     }
   }
 
-  // 3) Send server-side Purchase to Meta Conversions API (deduplicated with browser event_id)
-  var capiStatus = sendCapiPurchase_({
-    eventId: eventId,
-    nom: nom,
-    phoneE164: phone.e164,
-    city: displayCity,
-    q: q,
-    total: total,
-    fbp: clean_(o.fbp, 120),
-    fbc: clean_(o.fbc, 200),
-    sourceUrl: clean_(o.event_source_url, 500) || DEFAULT_SOURCE_URL,
-    userAgent: clean_(o.client_user_agent, 500)
+  // 3) Server-side LEAD to Meta (never Purchase here), same event_id as the browser Lead.
+  var lead = sendCapi_('Lead', {
+    eventId: eventId, nom: nom, phoneE164: phone.e164, city: displayCity, q: q, total: total,
+    fbp: fbp, fbc: fbc, userAgent: userAgent, sourceUrl: sourceUrl
   });
 
   // 4) Update the exact Sheet row with Marque Online + CAPI results
@@ -216,7 +232,14 @@ function doPost(e) {
     var lock2 = LockService.getScriptLock();
     try {
       lock2.waitLock(20000);
-      sheet_().getRange(rowIndex, 10, 1, 3).setValues([[status, detail, capiStatus]]);
+      var sh2 = sheet_();
+      if (String(sh2.getRange(rowIndex, 2).getValue()) !== ref) rowIndex = findRow_(sh2, ref); // the sheet was sorted
+      if (rowIndex > 1) {
+        sh2.getRange(rowIndex, 10, 1, 3).setValues([[status, detail, 'Lead ' + lead.text]]);
+        setCells_(sh2, rowIndex, trackCols_(sh2), { lead_sent: lead.ok }); // TRUE only on HTTP 200
+      }
+    } catch (rowErr) {
+      console.warn('row update: ' + rowErr);
     } finally {
       try { lock2.releaseLock(); } catch (_) {}
     }
@@ -224,50 +247,45 @@ function doPost(e) {
 
   cache.put('ref:' + ref, orderNumber || status, 21600);
   // The order is safely in the sheet either way, so the client gets confirmation.
-  return out({ ok: true, order: orderNumber, sent: status === 'ENVOYÉE', capi: capiStatus });
+  return out({ ok: true, order: orderNumber, sent: status === 'ENVOYÉE', capi: lead.ok });
 }
 
-function sendCapiPurchase_(info) {
+// =====================================================================================
+// Meta Conversions API
+// Test mode: put META_TEST_EVENT_CODE (e.g. TEST12345, from Events Manager > Test events) in the
+// Script properties; every event then shows in "Test events". Delete the property to go live.
+// =====================================================================================
+
+// Sends one Lead or Purchase. Returns { ok: true only on HTTP 200, text: what to show in the sheet }.
+// Never throws: a Meta problem must never cost an order.
+function sendCapi_(eventName, info) {
   try {
+    if (eventName !== 'Lead' && eventName !== 'Purchase') return { ok: false, text: 'ERR bad event ' + eventName };
     var props = PropertiesService.getScriptProperties();
     var token = props.getProperty('META_CAPI_TOKEN');
-    if (!token) return 'SKIP (no META_CAPI_TOKEN)';
+    if (!token) return { ok: false, text: 'SKIP (no META_CAPI_TOKEN)' };
+    if (!/^212[5-7]\d{8}$/.test(String(info.phoneE164 || ''))) return { ok: false, text: 'ERR phone' };
+    if (!(+info.total > 0)) return { ok: false, text: 'ERR value' };
     var testCode = (props.getProperty('META_TEST_EVENT_CODE') || '').trim();
 
-    var parts = String(info.nom || '').trim().split(/\s+/);
-    var fn = parts[0] || '';
-    var ln = parts.length > 1 ? parts.slice(1).join(' ') : '';
-
-    var ud = {
-      ph: [sha256_(info.phoneE164)],
-      country: [sha256_('ma')]
+    var ev = {
+      event_name: eventName,
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: String(info.eventId),
+      // Meta refuses a "website" event without the browser's user agent: old rows that have none go as system_generated.
+      action_source: info.userAgent ? 'website' : 'system_generated',
+      event_source_url: info.sourceUrl || DEFAULT_SOURCE_URL,
+      user_data: userData_(info),
+      custom_data: {
+        currency: 'MAD',
+        value: +info.total,
+        content_ids: ['collagene-25'],
+        content_name: 'Collagène marin · 25 gommes',
+        content_type: 'product',
+        num_items: +info.q || 1
+      }
     };
-    if (fn) ud.fn = [sha256_(fn.toLowerCase())];
-    if (ln) ud.ln = [sha256_(ln.toLowerCase())];
-    var ct = norm_(info.city).toLowerCase().replace(/\s+/g, '');
-    if (ct) ud.ct = [sha256_(ct)];
-    if (info.fbp) ud.fbp = info.fbp;
-    if (info.fbc) ud.fbc = info.fbc;
-    if (info.userAgent) ud.client_user_agent = info.userAgent;
-
-    var payload = {
-      data: [{
-        event_name: 'Purchase',
-        event_time: Math.floor(Date.now() / 1000),
-        event_id: info.eventId,
-        action_source: 'website',
-        event_source_url: info.sourceUrl,
-        user_data: ud,
-        custom_data: {
-          currency: 'MAD',
-          value: info.total,
-          content_ids: ['collagene-25'],
-          content_name: 'Collagène marin · 25 gommes',
-          content_type: 'product',
-          num_items: info.q
-        }
-      }]
-    };
+    var payload = { data: [ev] };
     if (testCode) payload.test_event_code = testCode;
 
     var url = 'https://graph.facebook.com/' + META_GRAPH_VER + '/' + META_PIXEL_ID + '/events?access_token=' + encodeURIComponent(token);
@@ -276,13 +294,123 @@ function sendCapiPurchase_(info) {
       payload: JSON.stringify(payload)
     });
     var code = res.getResponseCode();
-    if (code >= 200 && code < 300) {
-      return 'OK' + (testCode ? ' (test ' + testCode + ')' : '') + ' ' + Utilities.formatDate(new Date(), 'Africa/Casablanca', 'yyyy-MM-dd HH:mm');
-    }
-    return 'ERR ' + code + ': ' + String(res.getContentText() || '').slice(0, 200);
+    var when = Utilities.formatDate(new Date(), 'Africa/Casablanca', 'yyyy-MM-dd HH:mm');
+    if (code === 200) return { ok: true, text: 'OK' + (testCode ? ' (test ' + testCode + ')' : '') + ' ' + when };
+    return { ok: false, text: 'ERR ' + code + ' ' + when + ': ' + String(res.getContentText() || '').slice(0, 200) };
   } catch (err) {
-    return 'ERR: ' + String(err || '').slice(0, 200);
+    return { ok: false, text: 'ERR: ' + String(err || '').slice(0, 200) };
   }
+}
+
+// Hashed as Meta asks: lowercase, trimmed, SHA-256. Phone = 212XXXXXXXXX (no +, no spaces).
+// fbp, fbc and the user agent are sent unhashed.
+function userData_(info) {
+  var words = String(info.nom || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+  var ud = { ph: [sha256_(info.phoneE164)], country: [sha256_('ma')] };
+  if (words.length) ud.fn = [sha256_(words[0])];
+  if (words.length > 1) ud.ln = [sha256_(words.slice(1).join(' '))];
+  var ct = norm_(info.city).toLowerCase().replace(/\s+/g, '');
+  if (ct) ud.ct = [sha256_(ct)];
+  if (info.fbp) ud.fbp = String(info.fbp);
+  if (info.fbc) ud.fbc = String(info.fbc);
+  if (info.userAgent) ud.client_user_agent = String(info.userAgent);
+  return ud;
+}
+
+// =====================================================================================
+// Purchase on delivery: set "statut" to Livré by hand -> one Purchase for that row.
+// =====================================================================================
+
+// For an INSTALLABLE "On edit" trigger (a simple onEdit may not call Meta).
+// Edits made by this script (doPost) never fire it, only edits made by a person.
+function handleStatusEdit(e) {
+  if (!e || !e.range) return;
+  var sh = e.range.getSheet();
+  if (sh.getName() !== SHEET_NAME) return;
+  var c = trackCols_(sh), col = c.statut;
+  // phone, address, notes, any other column: nothing happens
+  if (e.range.getColumn() > col || e.range.getLastColumn() < col) return;
+  var lock = LockService.getScriptLock(); // two quick edits of the same row must not both send
+  if (!lock.tryLock(30000)) { console.warn('handleStatusEdit: busy, set Livré again'); return; }
+  try {
+    for (var r = Math.max(2, e.range.getRow()); r <= e.range.getLastRow(); r++) {
+      try { purchaseRow_(sh, c, r); } catch (err) { console.warn('purchase row ' + r + ': ' + err); }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function purchaseRow_(sh, c, r) {
+  var v = sh.getRange(r, 1, 1, sh.getLastColumn()).getValues()[0]; // read AFTER the lock: fresh values
+  var get = function (name) { return c[name] ? v[c[name] - 1] : ''; };
+  if (!isLivre_(get('statut'))) return;
+  if (isTrue_(get('purchase_sent'))) return;                       // already sent: never twice
+  if (/^OK/.test(String(get('CAPI_Status')))) {                    // old script already sent a Purchase
+    setCells_(sh, r, c, { purchase_sent_at: 'déjà envoyé à la commande (ancien script)' });
+    return;
+  }
+  var ref = String(get('external_reference') || get('Réf') || '').trim();
+  var phone = normPhone_(String(get('Téléphone')).replace(/^'/, ''));
+  var total = +String(get('Total DH')).replace(',', '.').replace(/[^\d.]/g, '');
+  if (!ref || !phone.valid || !(total > 0)) {
+    sh.getRange(r, 12).setValue('Purchase ERR: Réf, Téléphone ou Total DH invalide. Corrigez puis remettez Livré');
+    return;
+  }
+  var res = sendCapi_('Purchase', {
+    eventId: 'purchase_' + ref,
+    nom: get('Nom'), phoneE164: phone.e164, city: get('Ville'), q: get('Boîtes'), total: total,
+    fbp: String(get('fbp') || ''), fbc: String(get('fbc') || ''),
+    userAgent: String(get('user_agent') || ''), sourceUrl: String(get('event_source_url') || '')
+  });
+  sh.getRange(r, 12).setValue('Purchase ' + res.text);
+  if (res.ok) setCells_(sh, r, c, { purchase_sent: true, purchase_sent_at: new Date() }); // only on HTTP 200
+}
+
+// "Livré", "livre", " LIVRÉ " -> true. Anything else -> false.
+function isLivre_(v) {
+  var s = String(v == null ? '' : v).normalize('NFC').trim().toLowerCase();
+  return s === 'livré' || s === 'livre';
+}
+function isTrue_(v) { return v === true || /^(true|vrai)$/i.test(String(v).trim()); }
+
+// Column number of each header; missing TRACK_COLS are added after the last used column.
+function trackCols_(sh) {
+  var last = Math.max(sh.getLastColumn(), HEAD.length);
+  var names = sh.getRange(1, 1, 1, last).getValues()[0].map(function (n) { return String(n).trim(); });
+  var missing = TRACK_COLS.filter(function (n) { return names.indexOf(n) < 0; });
+  if (missing.length) {
+    sh.getRange(1, last + 1, 1, missing.length).setValues([missing]).setFontWeight('bold');
+    names = names.concat(missing);
+  }
+  var c = {};
+  names.forEach(function (n, i) { if (n && !c[n]) c[n] = i + 1; });
+  return c;
+}
+
+function setCells_(sh, r, c, values) {
+  Object.keys(values).forEach(function (k) { if (c[k]) sh.getRange(r, c[k]).setValue(values[k]); });
+}
+
+function statutRule_() { return SpreadsheetApp.newDataValidation().requireValueInList(STATUTS, true).setAllowInvalid(false).build(); }
+
+// Text from the browser starting with = + - @ would be read by Sheets as a formula.
+function safe_(v) { v = String(v == null ? '' : v); return /^[=+\-@]/.test(v) ? "'" + v : v; }
+
+function findRow_(sh, ref) {
+  var last = sh.getLastRow();
+  if (last < 2) return 0;
+  var refs = sh.getRange(2, 2, last - 1, 1).getValues();
+  for (var i = refs.length - 1; i >= 0; i--) if (String(refs[i][0]) === ref) return i + 2;
+  return 0;
+}
+
+/** Run ONCE from the editor: adds the tracking columns and the statut list on every order row. */
+function setupTracking() {
+  var sh = sheet_(), c = trackCols_(sh), last = sh.getLastRow();
+  if (last >= 2) sh.getRange(2, c.statut, last - 1, 1).setDataValidation(statutRule_());
+  Logger.log('Colonnes prêtes. Token Meta : ' + !!PropertiesService.getScriptProperties().getProperty('META_CAPI_TOKEN') +
+    ' · Mode test : ' + (PropertiesService.getScriptProperties().getProperty('META_TEST_EVENT_CODE') || 'non'));
 }
 
 function sha256_(s) {
@@ -376,10 +504,10 @@ function out(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).
 /** Run once from the editor to check MO_API_KEY: logs how many cities Marque Online returns. */
 function testKey() { CacheService.getScriptCache().remove('cities'); Logger.log(cities_().length + ' villes'); }
 
-/** Run once from the editor to check META_CAPI_TOKEN + META_TEST_EVENT_CODE. */
+/** Run once from the editor to check META_CAPI_TOKEN + META_TEST_EVENT_CODE (sends a test Lead). */
 function testCapi() {
-  var status = sendCapiPurchase_({
-    eventId: 'alb-test-' + Date.now(),
+  var status = sendCapi_('Lead', {
+    eventId: 'lead_test_' + Date.now(),
     nom: 'Test AlBaraka',
     phoneE164: '212612345678',
     city: 'Casablanca',
@@ -390,5 +518,5 @@ function testCapi() {
     sourceUrl: DEFAULT_SOURCE_URL,
     userAgent: 'AppsScript-Test'
   });
-  Logger.log(status);
+  Logger.log(status.text);
 }

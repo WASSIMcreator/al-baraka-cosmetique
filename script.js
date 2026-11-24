@@ -437,7 +437,7 @@ $('#orderForm').addEventListener('submit', async e => {
   ['name','phone','city'].forEach(n => { const ok = n === 'phone' ? phoneOk(val(n)) : val(n).length > 1; f.elements[n].setAttribute('aria-invalid', !ok); if (!ok && !bad) bad = n; });
   if (bad){ msg.textContent = bad === 'phone' && val('phone') ? t('errPhone') : t('errFields'); f.elements[bad].focus(); return; }
   track('Lead', {value:cartTotal(), currency:CONFIG.currency, content_ids:cart.map(i=>i.id), num_items:cartCount()});
-  track('Purchase', {value:cartTotal(), currency:CONFIG.currency, content_ids:cart.map(i=>i.id), content_type:'product', num_items:cartCount()});
+  // No Purchase here: cash on delivery, the client has not paid yet.
 
   // 1) Marque Online items (Melatonin): one order per product, the offer (2 or 3 boxes) goes in the address note
   const moItems = cart.filter(i => MARQUE.slugs[i.id]);
