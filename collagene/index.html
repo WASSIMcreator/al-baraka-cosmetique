@@ -51,7 +51,7 @@ h1 span{color:var(--pink)}
 .price{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 12px}
 .price b{font-size:30px;color:var(--pink);font-weight:900;line-height:1}
 .price s{color:var(--muted);font-size:16px}
-.chip{background:var(--ink);color:#fff;border-radius:30px;padding:3px 11px;font-size:12.5px;font-weight:800}
+.chip{background:var(--ink);color:#fff;border:0;border-radius:30px;padding:6px 13px;font:800 12.5px Cairo,sans-serif;cursor:pointer;touch-action:manipulation}
 .cta{display:block;width:100%;text-align:center;background:var(--pink);color:#fff;font:900 18px Cairo,sans-serif;border:0;border-radius:16px;padding:14px;text-decoration:none;cursor:pointer;box-shadow:0 14px 30px -12px rgba(217,88,126,.9)}
 [hidden]{display:none !important}
 .cta:disabled{opacity:.75;cursor:wait}
@@ -135,7 +135,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px 0}
   <div class="hero"><img src="collagen-mobile.webp" srcset="collagen-mobile.webp 600w, collagen.webp 1024w" sizes="(min-width:900px) 512px, 180px" alt="كولاجين بحري، 25 حبة جيلي" width="1024" height="1536" fetchpriority="high"></div>
   <h1>كولاجين بحري <span>على شكل حبات جيلي</span></h1>
   <p class="lead">حبة لذيذة كل يوم بدل الكبسولات: كولاجين بحري لبشرة أكثر إشراقاً، شعر أقوى وأظافر صحية.</p>
-  <div class="price"><b><span class="lat">195 DH</span></b><span class="chip">علبتين بـ <span class="lat">350 DH</span></span></div>
+  <div class="price"><b><span class="lat">195 DH</span></b><button type="button" class="chip" id="duoChip">علبتين بـ <span class="lat">350 DH</span></button></div>
   <a class="cta" href="#order" data-ev="InitiateCheckout">اطلبي الآن · الدفع عند الاستلام</a>
 
   <section>
@@ -178,7 +178,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px 0}
         <ul class="city-list" id="cityList" role="listbox" hidden></ul>
       </div>
       <label class="field"><span>العنوان</span><input name="adresse" autocomplete="street-address" required placeholder="الحي، الزنقة، رقم الدار"></label>
-      <input class="hp" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <input class="hp" name="website_url_check" id="hpField" tabindex="-1" autocomplete="new-password" readonly aria-hidden="true">
       <div class="sum"><span>المجموع <span class="free">توصيل مجاني</span></span><span class="lat" id="tot">195 DH</span></div>
       <p class="err" id="err" role="alert"></p>
       <a class="cta cta-wa" id="waFallback" href="#" target="_blank" rel="noopener noreferrer" hidden>💬 أرسلي الطلب عبر واتساب</a>
@@ -303,6 +303,13 @@ const track = (ev, data, opts) => { try { if (window.fbq) opts ? fbq('track', ev
 const waLink = txt => 'https://api.whatsapp.com/send?phone=' + CONFIG.whatsapp + '&text=' + encodeURIComponent(txt);
 const getCookie = n => { const m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; };
 const qs = new URLSearchParams(location.search);
+let fallbackFbp = '';
+const getFbp = () => {
+  const c = getCookie('_fbp');
+  if (c) return c;
+  if (!fallbackFbp) fallbackFbp = 'fb.1.' + Date.now() + '.' + Math.floor(1000000000 + Math.random() * 9000000000);
+  return fallbackFbp;
+};
 const getFbc = () => {
   const c = getCookie('_fbc');
   if (c) return c;
@@ -319,19 +326,28 @@ const stickyP = stickyBar.querySelector('.p b'), submitBtn = document.getElement
 const qty = () => +f.q.value;
 f.querySelectorAll('input[name=q]').forEach(r => r.addEventListener('change', () => { tot.textContent = stickyP.textContent = CONFIG.prices[qty()] + ' DH'; }));
 
-// InitiateCheckout once per session with product parameters
+let isSubmitting = false;
+
+// InitiateCheckout once per session (CTA click, duo chip, or first form focus)
 let icSent = false;
+const fireIC = () => {
+  if (icSent) return;
+  icSent = true;
+  const q = qty();
+  track('InitiateCheckout', { value: CONFIG.prices[q], currency: 'MAD', num_items: q, content_ids: [CONFIG.contentId], content_type: 'product' });
+};
 document.querySelectorAll('[data-ev]').forEach(a => a.addEventListener('click', () => {
   const ev = a.dataset.ev;
-  if (ev === 'InitiateCheckout') {
-    if (icSent) return;
-    icSent = true;
-    const q = qty();
-    track('InitiateCheckout', { value: CONFIG.prices[q], currency: 'MAD', num_items: q, content_ids: [CONFIG.contentId], content_type: 'product' });
-  } else {
-    track(ev);
-  }
+  if (ev === 'InitiateCheckout') fireIC(); else track(ev);
 }));
+
+const duoChip = document.getElementById('duoChip');
+if (duoChip) duoChip.addEventListener('click', () => {
+  const r2 = f.querySelector('input[name="q"][value="2"]');
+  if (r2) { r2.checked = true; tot.textContent = stickyP.textContent = CONFIG.prices[2] + ' DH'; }
+  fireIC();
+  document.getElementById('order').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 
 // Hide floating sticky bar & WhatsApp bubble while inside #order or while typing in the form
 let orderInView = false, formFocused = false;
@@ -346,11 +362,16 @@ if ('IntersectionObserver' in window) {
     syncFloating();
   }, { threshold: 0.05 }).observe(document.getElementById('order'));
 }
-f.addEventListener('focusin', () => { formFocused = true; syncFloating(); });
-f.addEventListener('focusout', () => setTimeout(() => { formFocused = f.contains(document.activeElement); syncFloating(); }, 150));
+f.addEventListener('focusin', () => { formFocused = true; syncFloating(); fireIC(); });
+f.addEventListener('focusout', () => setTimeout(() => {
+  formFocused = f.contains(document.activeElement);
+  syncFloating();
+  if (!formFocused) window.scrollTo(window.scrollX, window.scrollY);
+}, 80));
 
-// Re-enable submit button and re-sync displayed total if user navigates back (bfcache)
+// Re-enable submit button, reset lock, and re-sync displayed total if user navigates back (bfcache)
 window.addEventListener('pageshow', () => {
+  isSubmitting = false;
   submitBtn.disabled = false;
   submitBtn.textContent = 'أكدي الطلب';
   tot.textContent = stickyP.textContent = CONFIG.prices[qty()] + ' DH';
@@ -364,9 +385,11 @@ const toAsciiDigits = s => String(s || '')
   .replace(/[\u06F0-\u06F9]/g, d => String(d.charCodeAt(0) - 0x06F0));
 
 function normPhone(raw) {
-  let s = toAsciiDigits(raw).replace(/[\s.\-()]/g, '');
+  let s = toAsciiDigits(raw)
+    .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069\u00a0\s.\-()]/g, '')
+    .replace(/[^\d+]/g, '');
   if (s.startsWith('00212')) s = '+212' + s.slice(5);
-  const clean = s.replace(/[^\d+]/g, '').replace(/^(\+?212)0([5-7]\d{8})$/, '$1$2');
+  const clean = s.replace(/^(\+?212)0([5-7]\d{8})$/, '$1$2');
   const ok = /^(?:\+?212|0)?[5-7]\d{8}$/.test(clean);
   if (!ok) return { ok: false, local: '' };
   const digits = clean.replace(/\D/g, '');
@@ -460,15 +483,26 @@ function resolveCity(raw) {
 
 let cityInteracting = false, cityTouchStart = null;
 const closeCityList = () => { cityList.hidden = true; villeInput.setAttribute('aria-expanded', 'false'); };
+const scrollVilleIntoView = () => {
+  if (window.innerWidth > 768) return;
+  const wrap = villeInput.closest('.city-wrap') || villeInput;
+  if (window.visualViewport) {
+    const avail = Math.max(130, Math.min(220, Math.floor(window.visualViewport.height * 0.38)));
+    cityList.style.maxHeight = avail + 'px';
+  }
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
 villeInput.addEventListener('focus', () => {
   renderCityList(searchCities(villeInput.value));
-  if (window.innerWidth <= 768) {
-    const wrap = villeInput.closest('.city-wrap') || villeInput;
-    setTimeout(() => wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
-  }
+  setTimeout(scrollVilleIntoView, 120);
 });
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    if (document.activeElement === villeInput && !cityList.hidden) scrollVilleIntoView();
+  });
+}
 villeInput.addEventListener('input', () => renderCityList(searchCities(villeInput.value)));
-villeInput.addEventListener('blur', () => setTimeout(() => { if (!cityInteracting) closeCityList(); }, 220));
+villeInput.addEventListener('blur', () => setTimeout(() => { if (!cityInteracting) { closeCityList(); window.scrollTo(window.scrollX, window.scrollY); } }, 220));
 cityList.addEventListener('pointerdown', e => {
   cityInteracting = true;
   cityTouchStart = { x: e.clientX, y: e.clientY };
@@ -486,7 +520,7 @@ cityList.addEventListener('click', e => {
 
 const src = ['utm_source', 'utm_campaign', 'utm_content'].map(k => qs.get(k)).filter(Boolean).join(' / ');
 const newOrderId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-let orderId = newOrderId(), isSubmitting = false;
+let orderId = newOrderId();
 
 f.addEventListener('submit', async e => {
   e.preventDefault();
@@ -517,11 +551,18 @@ f.addEventListener('submit', async e => {
     'الاسم: ' + nom, 'الهاتف: ' + phone.local, 'المدينة: ' + ville, 'العنوان: ' + adresse,
     src ? 'المصدر: ' + src : ''].filter(Boolean).join('\n');
 
-  let ok = false;
+  let ok = false, serverErr = '';
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const slowTimer = setTimeout(() => {
+    if (isSubmitting) err.textContent = 'جاري تأكيد طلبك، المرجو الانتظار ثواني…';
+  }, 5000);
+  const abortTimer = ctrl ? setTimeout(() => ctrl.abort(), 20000) : null;
+  const hpEl = document.getElementById('hpField');
   try {
     const r = await fetch(CONFIG.script, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      signal: ctrl ? ctrl.signal : undefined,
       body: JSON.stringify({
         id: orderId,
         event_id: eventId,
@@ -531,8 +572,8 @@ f.addEventListener('submit', async e => {
         adresse,
         q,
         src,
-        hp: f.hp.value,
-        fbp: getCookie('_fbp'),
+        hp: hpEl ? hpEl.value : '',
+        fbp: getFbp(),
         fbc: getFbc(),
         event_source_url: location.href,
         user_agent: navigator.userAgent
@@ -540,18 +581,33 @@ f.addEventListener('submit', async e => {
     });
     const j = await r.json();
     ok = j && j.ok === true;
-  } catch (_) {}
+    if (!ok && j && j.error) serverErr = String(j.error);
+  } catch (_) {
+    serverErr = 'network';
+  } finally {
+    clearTimeout(slowTimer);
+    if (abortTimer) clearTimeout(abortTimer);
+  }
 
   if (!ok) {
     isSubmitting = false;
     submitBtn.disabled = false;
     submitBtn.textContent = 'أكدي الطلب';
-    err.textContent = 'وقع مشكل فالاتصال. تقدري تعاودي المحاولة ولا تصيفطي الطلب مباشرة فواتساب:';
+    if (serverErr === 'too many' || serverErr === 'too many orders this hour') {
+      err.textContent = 'وصلتي للحد المسموح من الطلبات دابا. إلا بغيتي تكملي الطلب تواصلي معانا فواتساب:';
+    } else if (serverErr === 'missing fields') {
+      err.textContent = 'عافاك تأكدي من المعلومات (الاسم، الهاتف، المدينة والعنوان) وعاودي الإرسال.';
+    } else if (serverErr === 'busy') {
+      err.textContent = 'السيرفر مشغول شوية دابا، عاودي الضغط على "أكدي الطلب" بعد ثواني:';
+    } else {
+      err.textContent = 'وقع مشكل فالاتصال. تقدري تعاودي المحاولة ولا تصيفطي الطلب مباشرة فواتساب:';
+    }
     waFallback.href = waLink(msg);
     waFallback.hidden = false;
     err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     return;
   }
+  err.textContent = '';
 
   // Browser LEAD only, once the Apps Script has saved the order. NEVER Purchase here: it is cash on
   // delivery, nobody has paid yet. The Purchase is sent by the script when the row's statut becomes Confirmé (or Livré fallback).

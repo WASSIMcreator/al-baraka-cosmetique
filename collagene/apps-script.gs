@@ -134,8 +134,6 @@ function doGet(e) {
 function doPost(e) {
   var o;
   try { o = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (_) { return out({ ok: false, error: 'bad json' }); }
-  if (o.hp) return out({ ok: true }); // hidden field: only robots fill it
-
   var nom = clean_(o.nom, 80);
   var phone = normPhone_(o.tel);
   var ville = clean_(o.ville, 60);
@@ -150,6 +148,19 @@ function doPost(e) {
   var userAgent = clean_(o.user_agent || o.client_user_agent, 500); // client_user_agent = pages still cached
   var sourceUrl = clean_(o.event_source_url, 500) || DEFAULT_SOURCE_URL;
 
+  // Honeypot triggered: log to Sheet as SPAM? (never silently lose a real autofilled order), skip Marque Online & CAPI
+  if (o.hp) {
+    try {
+      var hpLock = LockService.getScriptLock();
+      if (hpLock.tryLock(10000)) {
+        try {
+          sheet_().appendRow([new Date(), ref || 'ALB-hp', nom, "'" + phone.local, ville, adresse, q, total, src, 'SPAM?', 'Honeypot rempli (à vérifier)', 'SKIP (honeypot)']);
+        } finally { hpLock.releaseLock(); }
+      }
+    } catch (_) {}
+    return out({ ok: true });
+  }
+
   if (nom.length < 2 || !phone.valid || !ville || adresse.length < 3 || ref.length < 8) {
     return out({ ok: false, error: 'missing fields' });
   }
@@ -158,13 +169,23 @@ function doPost(e) {
   var done = cache.get('ref:' + ref); // same click sent twice
   if (done) return out({ ok: true, order: done, dedup: true });
 
-  // Rate limits: per normalized phone (6h) + global hourly safety cap
+  // Rate limits: per normalized phone (6h) + global hourly safety cap (log to Sheet as LIMITE so no order is lost)
   var phoneKey = 'tel:' + phone.e164;
   var hourKey = 'hr:' + Utilities.formatDate(new Date(), 'Africa/Casablanca', 'yyyyMMddHH');
   var nPhone = +(cache.get(phoneKey) || 0);
   var nHour = +(cache.get(hourKey) || 0);
-  if (nPhone >= MAX_PER_PHONE) return out({ ok: false, error: 'too many' });
-  if (nHour >= MAX_PER_HOUR) return out({ ok: false, error: 'too many orders this hour' });
+  if (nPhone >= MAX_PER_PHONE || nHour >= MAX_PER_HOUR) {
+    var limitErr = nPhone >= MAX_PER_PHONE ? 'too many' : 'too many orders this hour';
+    try {
+      var limLock = LockService.getScriptLock();
+      if (limLock.tryLock(10000)) {
+        try {
+          sheet_().appendRow([new Date(), ref, nom, "'" + phone.local, ville, adresse, q, total, src, 'LIMITE', limitErr, 'SKIP (limite)']);
+        } finally { limLock.releaseLock(); }
+      }
+    } catch (_) {}
+    return out({ ok: false, error: limitErr });
+  }
   cache.put(phoneKey, String(nPhone + 1), 21600);
   cache.put(hourKey, String(nHour + 1), 3600);
 
@@ -176,7 +197,7 @@ function doPost(e) {
   // 1) GUARANTEED BACKUP FIRST: write the row to Google Sheet BEFORE calling Marque Online
   var rowIndex = 0;
   var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
+  if (!lock.tryLock(20000)) return out({ ok: false, error: 'busy' });
   try {
     var sh = sheet_();
     sh.appendRow([new Date(), ref, nom, "'" + phone.local, displayCity, adresse, q, total, src, 'EN COURS', '', '']);
@@ -232,7 +253,7 @@ function doPost(e) {
   if (rowIndex > 1) {
     var lock2 = LockService.getScriptLock();
     try {
-      lock2.waitLock(20000);
+      if (!lock2.tryLock(20000)) throw new Error('lock2 busy');
       var sh2 = sheet_();
       if (String(sh2.getRange(rowIndex, 2).getValue()) !== ref) rowIndex = findRow_(sh2, ref); // the sheet was sorted
       if (rowIndex > 1) {
