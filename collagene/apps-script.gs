@@ -197,34 +197,29 @@ function doPost(e) {
 
   // 2) Send order to COD Marque Online (wrapped in try/catch so a timeout/network error never loses the row)
   var status = '', detail = '', orderNumber = '';
-  if (!city) {
-    status = 'ERREUR VILLE';
-    detail = 'Ville introuvable dans Marque Online (' + ville + '): ajoutez la commande à la main';
-  } else {
-    try {
-      var res = UrlFetchApp.fetch(API + '/orders', {
-        method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-        headers: { Authorization: 'Bearer ' + key_() },
-        payload: JSON.stringify({
-          externalReference: ref, fullName: nom, phoneNumber: phone.local, cityId: city.cityId,
-          address: adresse, customerAmount: total, requiresConfirmation: true,
-          note: (q === 2 ? 'Offre 2 boîtes = 350 DH' : '1 boîte = 195 DH') + (src ? ' · ' + src : ''),
-          items: [{ productId: PRODUCT_ID, quantity: q }]
-        })
-      });
-      var code = res.getResponseCode(), body = res.getContentText();
-      if (code >= 200 && code < 300) {
-        try { orderNumber = JSON.parse(body).orderNumber || 'OK'; } catch (_) { orderNumber = 'OK'; }
-        status = 'ENVOYÉE';
-        detail = orderNumber;
-      } else {
-        status = 'ERREUR ' + code;
-        detail = String(body || '').slice(0, 400);
-      }
-    } catch (err) {
-      status = 'ERREUR RÉSEAU';
-      detail = String(err || '').slice(0, 400);
+  try {
+    var res = UrlFetchApp.fetch(API + '/orders', {
+      method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + key_() },
+      payload: JSON.stringify({
+        externalReference: ref, fullName: nom, phoneNumber: phone.local, city: displayCity || ville,
+        address: adresse, customerAmount: total, requiresConfirmation: true,
+        note: (q === 2 ? 'Offre 2 boîtes = 350 DH' : '1 boîte = 195 DH') + (src ? ' · ' + src : ''),
+        items: [{ productId: PRODUCT_ID, quantity: q }]
+      })
+    });
+    var code = res.getResponseCode(), body = res.getContentText();
+    if (code >= 200 && code < 300) {
+      try { orderNumber = JSON.parse(body).orderNumber || 'OK'; } catch (_) { orderNumber = 'OK'; }
+      status = 'ENVOYÉE';
+      detail = orderNumber;
+    } else {
+      status = 'ERREUR ' + code;
+      detail = String(body || '').slice(0, 400);
     }
+  } catch (err) {
+    status = 'ERREUR RÉSEAU';
+    detail = String(err || '').slice(0, 400);
   }
 
   // 3) Server-side LEAD to Meta (never Purchase here), same event_id as the browser Lead.

@@ -6,10 +6,15 @@
 <meta name="theme-color" content="#d9587e">
 <title>كولاجين بحري · 25 حبة جيلي | AL BARAKA</title>
 <meta name="description" content="كولاجين بحري على شكل حبات جيلي بطعم لذيذ: للبشرة، الشعر والأظافر. 195 درهم، وعلبتين بـ 350 درهم. الدفع عند الاستلام.">
-<meta property="og:title" content="كولاجين بحري · 25 حبة جيلي">
-<meta property="og:image" content="https://wassimcreator.github.io/al-baraka-cosmetique/collagene/collagen.webp">
+<meta property="og:type" content="product">
+<meta property="og:locale" content="ar_MA">
+<meta property="og:url" content="https://wassimcreator.github.io/al-baraka-cosmetique/collagene/">
+<meta property="og:title" content="كولاجين بحري · 25 حبة جيلي | AL BARAKA">
+<meta property="og:description" content="كولاجين بحري على شكل حبات جيلي بطعم لذيذ: للبشرة، الشعر والأظافر. 195 درهم، وعلبتين بـ 350 درهم. الدفع عند الاستلام.">
+<meta property="og:image" content="https://wassimcreator.github.io/al-baraka-cosmetique/collagene/collagen-og.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../icon-192.png">
-<link rel="preload" as="image" href="collagen.webp" type="image/webp" fetchpriority="high">
+<link rel="preload" as="image" imagesrcset="collagen-mobile.webp 600w, collagen.webp 1024w" imagesizes="(min-width:900px) 512px, 180px" type="image/webp" fetchpriority="high">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Poppins:wght@600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Poppins:wght@600;800&display=swap" rel="stylesheet"></noscript>
@@ -24,6 +29,7 @@ fbq('track','ViewContent',{content_ids:['collagene-25'],content_name:'Collagène
 <!-- End Meta Pixel Code -->
 <style>
 :root{--pink:#d9587e;--pink2:#f3a6bd;--blush:#fff1f4;--ink:#2b1620;--muted:#7b5a66;--line:#f2d3dc;--ok:#1fae5b}
+html{scroll-behavior:smooth}
 *{box-sizing:border-box}
 body{margin:0;font-family:Cairo,system-ui,sans-serif;background:var(--blush);color:var(--ink);line-height:1.6;padding-bottom:84px}
 .lat{font-family:Poppins,Cairo,sans-serif;direction:ltr;display:inline-block}
@@ -53,9 +59,6 @@ h2{font-size:21px;margin:0 0 10px;font-weight:900}
 .ing-box p{margin:0;font-size:14.5px;color:var(--muted)}
 .ing-box b{color:var(--ink)}
 .onssa-tag{display:inline-flex;align-items:center;gap:6px;background:#eefaf2;color:#146c38;border:1px solid #bfe6cb;border-radius:10px;padding:6px 10px;font-size:13px;font-weight:800;margin-top:4px;width:fit-content}
-.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:grid;gap:8px}
-.steps li{background:#fff;border-radius:14px;padding:10px 14px;border:1px solid var(--line);display:flex;gap:10px;align-items:center;font-size:15px}
-.steps li::before{counter-increment:s;content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;background:var(--pink2);color:var(--ink);font-weight:900;display:grid;place-items:center}
 .trust{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;text-align:center;font-size:13px;font-weight:800}
 .trust div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 6px}
 .trust span{display:block;font-size:20px}
@@ -86,15 +89,15 @@ h2{font-size:21px;margin:0 0 10px;font-weight:900}
 .note{color:var(--muted);font-size:13px;text-align:center;margin:10px 0 0}
 #done{text-align:center}
 #done .big{font-size:52px}
-details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px}
-summary{font-weight:800;cursor:pointer}
-details p{margin:8px 0 0;color:var(--muted)}
+details{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:8px}
+summary{font-weight:800;cursor:pointer;padding:12px 14px;min-height:44px}
+details p{margin:0;padding:0 14px 12px;color:var(--muted)}
 footer{text-align:center;color:var(--muted);font-size:13px;padding:20px 0}
 .sticky{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:12px;align-items:center;z-index:30;transition:transform .25s ease,opacity .25s ease}
 .sticky.hide{transform:translateY(115%);opacity:0;pointer-events:none}
 .sticky .p{font-weight:900;white-space:nowrap}.sticky .p b{color:var(--pink);font-size:20px}
 .sticky .cta{padding:12px;font-size:17px}
-.waf{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));inset-inline-start:16px;z-index:40;display:flex;align-items:center;gap:8px;background:var(--ok);color:#fff;text-decoration:none;font-weight:800;font-size:14px;padding:10px 14px;border-radius:40px;box-shadow:0 12px 28px -8px rgba(31,174,91,.75);transition:transform .25s ease,opacity .25s ease}
+.waf{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));inset-inline-start:16px;z-index:40;display:flex;align-items:center;gap:8px;background:var(--ok);color:#fff;text-decoration:none;font-weight:800;font-size:14px;padding:11px 15px;min-height:44px;border-radius:40px;box-shadow:0 12px 28px -8px rgba(31,174,91,.75);transition:transform .25s ease,opacity .25s ease}
 .waf.hide{transform:translateY(140%);opacity:0;pointer-events:none}
 .waf svg{width:22px;height:22px}
 @media (min-width:900px){
@@ -115,7 +118,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px 0}
 <body>
 <div class="bar">🚚 التوصيل لجميع المدن · 💵 الدفع عند الاستلام</div>
 <main class="wrap">
-  <div class="hero"><img src="collagen.webp" alt="كولاجين بحري، 25 حبة جيلي" width="1024" height="1536" fetchpriority="high"></div>
+  <div class="hero"><img src="collagen-mobile.webp" srcset="collagen-mobile.webp 600w, collagen.webp 1024w" sizes="(min-width:900px) 512px, 180px" alt="كولاجين بحري، 25 حبة جيلي" width="1024" height="1536" fetchpriority="high"></div>
   <h1>كولاجين بحري <span>على شكل حبات جيلي</span></h1>
   <p class="lead">حبة لذيذة كل يوم بدل الكبسولات: كولاجين بحري لبشرة أكثر إشراقاً، شعر أقوى وأظافر صحية.</p>
   <div class="price"><b><span class="lat">195 DH</span></b><span class="chip">علبتين بـ <span class="lat">350 DH</span></span></div>
@@ -325,10 +328,11 @@ if ('IntersectionObserver' in window) {
   }, { threshold: 0.12 }).observe(document.getElementById('order'));
 }
 
-// Re-enable submit button if user navigates back (bfcache)
+// Re-enable submit button and re-sync displayed total if user navigates back (bfcache)
 window.addEventListener('pageshow', () => {
   submitBtn.disabled = false;
   submitBtn.textContent = 'أكدي الطلب';
+  tot.textContent = stickyP.textContent = CONFIG.prices[qty()] + ' DH';
 });
 
 // Normalization helpers (Latin + Arabic + Arabic-Indic digits)
@@ -508,7 +512,7 @@ f.addEventListener('submit', async e => {
   }
 
   // Browser LEAD only, once the Apps Script has saved the order. NEVER Purchase here: it is cash on
-  // delivery, nobody has paid yet. The Purchase is sent by the script when the row's statut becomes Livré.
+  // delivery, nobody has paid yet. The Purchase is sent by the script when the row's statut becomes Confirmé (or Livré fallback).
   track('Lead', { currency: 'MAD', value: total }, { eventID: eventId });
 
   orderId = newOrderId();
