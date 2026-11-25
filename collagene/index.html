@@ -46,7 +46,9 @@ h1 span{color:var(--pink)}
 .chip{background:var(--ink);color:#fff;border-radius:30px;padding:3px 11px;font-size:12.5px;font-weight:800}
 .cta{display:block;width:100%;text-align:center;background:var(--pink);color:#fff;font:900 18px Cairo,sans-serif;border:0;border-radius:16px;padding:14px;text-decoration:none;cursor:pointer;box-shadow:0 14px 30px -12px rgba(217,88,126,.9)}
 [hidden]{display:none !important}
-.cta:disabled{opacity:.6;cursor:wait}
+.cta:disabled{opacity:.75;cursor:wait}
+.cta .spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-inline-end:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
 .cta-wa{background:var(--ok);box-shadow:0 12px 26px -10px rgba(31,174,91,.8);margin-top:8px;font-size:16px;padding:12px}
 section{margin:24px 0}
 h2{font-size:21px;margin:0 0 10px;font-weight:900}
@@ -84,7 +86,8 @@ h2{font-size:21px;margin:0 0 10px;font-weight:900}
 .city-list li:hover,.city-list li.act{background:#fff1f4;color:var(--pink)}
 .city-list li small{color:var(--muted);font-weight:600;font-size:13px}
 .hp{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
-.sum{display:flex;justify-content:space-between;font-weight:900;font-size:18px;margin:12px 0}
+.sum{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:900;font-size:18px;margin:12px 0}
+.sum .free{font-size:12px;font-weight:800;color:#146c38;background:#eefaf2;border:1px solid #bfe6cb;border-radius:99px;padding:2px 9px;margin-inline-start:6px}
 .err{color:#c0234e;font-weight:800;min-height:1.4em;margin:6px 0;font-size:14.5px}
 .note{color:var(--muted);font-size:13px;text-align:center;margin:10px 0 0}
 #done{text-align:center}
@@ -97,7 +100,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px 0}
 .sticky.hide{transform:translateY(115%);opacity:0;pointer-events:none}
 .sticky .p{font-weight:900;white-space:nowrap}.sticky .p b{color:var(--pink);font-size:20px}
 .sticky .cta{padding:12px;font-size:17px}
-.waf{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));inset-inline-start:16px;z-index:40;display:flex;align-items:center;gap:8px;background:var(--ok);color:#fff;text-decoration:none;font-weight:800;font-size:14px;padding:11px 15px;min-height:44px;border-radius:40px;box-shadow:0 12px 28px -8px rgba(31,174,91,.75);transition:transform .25s ease,opacity .25s ease}
+.waf{position:fixed;bottom:calc(94px + env(safe-area-inset-bottom));inset-inline-start:16px;z-index:25;display:flex;align-items:center;gap:8px;background:var(--ok);color:#fff;text-decoration:none;font-weight:800;font-size:14px;padding:11px 15px;min-height:44px;border-radius:40px;box-shadow:0 12px 28px -8px rgba(31,174,91,.75);transition:transform .25s ease,opacity .25s ease}
 .waf.hide{transform:translateY(140%);opacity:0;pointer-events:none}
 .waf svg{width:22px;height:22px}
 @media (min-width:900px){
@@ -165,9 +168,9 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px 0}
       </div>
       <label class="field"><span>العنوان</span><input name="adresse" autocomplete="street-address" required placeholder="الحي، الزنقة، رقم الدار"></label>
       <input class="hp" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <div class="sum"><span>المجموع</span><span class="lat" id="tot">195 DH</span></div>
+      <div class="sum"><span>المجموع <span class="free">توصيل مجاني</span></span><span class="lat" id="tot">195 DH</span></div>
       <p class="err" id="err" role="alert"></p>
-      <a class="cta cta-wa" id="waFallback" href="#" hidden>💬 أرسلي الطلب عبر واتساب</a>
+      <a class="cta cta-wa" id="waFallback" href="#" target="_blank" rel="noopener noreferrer" hidden>💬 أرسلي الطلب عبر واتساب</a>
       <button class="cta" type="submit" id="submitBtn">أكدي الطلب</button>
       <p class="note">ما كتخلصي حتى توصلك السلعة. غادي نتصلو بيك باش نأكدو الطلب.</p>
     </form>
@@ -188,7 +191,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px 0}
 <footer>AL BARAKA · مكمل غذائي، لا يعوض نظاماً غذائياً متوازناً · <span class="lat">ONSSA CAPV.26.1009.24</span></footer>
 
 <div class="sticky" id="stickyBar"><span class="p"><b class="lat">195 DH</b></span><a class="cta" href="#order" data-ev="InitiateCheckout">اطلبي الآن</a></div>
-<a class="waf" id="waFloat" data-wa="سلام، بغيت نعرف كثر على الكولاجين البحري" data-ev="Contact" aria-label="WhatsApp"><svg viewBox="0 0 32 32" fill="currentColor"><path d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6c-2 0-4-.5-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.6.7.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.1-.3-.2-.6-.4z"/></svg>تواصل معنا</a>
+<a class="waf" id="waFloat" data-wa="سلام، بغيت نعرف كثر على الكولاجين البحري" data-ev="Contact" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><svg viewBox="0 0 32 32" fill="currentColor"><path d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6c-2 0-4-.5-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.6.7.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.1-.3-.2-.6-.4z"/></svg>تواصل معنا</a>
 
 <script>
 const CONFIG = {
@@ -295,8 +298,8 @@ const getFbc = () => {
   return fbclid ? ('fb.1.' + Date.now() + '.' + fbclid) : '';
 };
 
-// Same-tab WhatsApp links (avoids IG/FB in-app browser blocking target="_blank")
-document.querySelectorAll('[data-wa]').forEach(a => { a.href = waLink(a.dataset.wa); a.rel = 'noopener'; });
+// Optional manual WhatsApp links open in a new tab so users never lose the landing page
+document.querySelectorAll('[data-wa]').forEach(a => { a.href = waLink(a.dataset.wa); a.target = '_blank'; a.rel = 'noopener noreferrer'; });
 
 const f = document.getElementById('f'), tot = document.getElementById('tot'), err = document.getElementById('err');
 const stickyBar = document.getElementById('stickyBar'), waFloat = document.getElementById('waFloat');
@@ -318,14 +321,21 @@ document.querySelectorAll('[data-ev]').forEach(a => a.addEventListener('click', 
   }
 }));
 
-// Hide floating sticky bar & WhatsApp bubble while inside #order so they don't cover form/keyboard
+// Hide floating sticky bar & WhatsApp bubble while inside #order or while typing in the form
+let orderInView = false, formFocused = false;
+const syncFloating = () => {
+  const hide = orderInView || formFocused;
+  stickyBar.classList.toggle('hide', hide);
+  waFloat.classList.toggle('hide', hide);
+};
 if ('IntersectionObserver' in window) {
   new IntersectionObserver(es => {
-    const on = es[0].isIntersecting;
-    stickyBar.classList.toggle('hide', on);
-    waFloat.classList.toggle('hide', on);
-  }, { threshold: 0.12 }).observe(document.getElementById('order'));
+    orderInView = es[0].isIntersecting;
+    syncFloating();
+  }, { threshold: 0.05 }).observe(document.getElementById('order'));
 }
+f.addEventListener('focusin', () => { formFocused = true; syncFloating(); });
+f.addEventListener('focusout', () => setTimeout(() => { formFocused = f.contains(document.activeElement); syncFloating(); }, 150));
 
 // Re-enable submit button and re-sync displayed total if user navigates back (bfcache)
 window.addEventListener('pageshow', () => {
@@ -344,11 +354,11 @@ const toAsciiDigits = s => String(s || '')
 function normPhone(raw) {
   let s = toAsciiDigits(raw).replace(/[\s.\-()]/g, '');
   if (s.startsWith('00212')) s = '+212' + s.slice(5);
-  const clean = s.replace(/[^\d+]/g, '');
-  const ok = /^(?:\+?212|0)[5-7]\d{8}$/.test(clean);
+  const clean = s.replace(/[^\d+]/g, '').replace(/^(\+?212)0([5-7]\d{8})$/, '$1$2');
+  const ok = /^(?:\+?212|0)?[5-7]\d{8}$/.test(clean);
   if (!ok) return { ok: false, local: '' };
   const digits = clean.replace(/\D/g, '');
-  const local = digits.startsWith('212') ? '0' + digits.slice(3) : digits;
+  const local = digits.startsWith('212') ? '0' + digits.slice(3) : (digits.length === 9 ? '0' + digits : digits);
   return { ok: true, local };
 }
 
@@ -436,30 +446,42 @@ function resolveCity(raw) {
   return aliasFr || v; // never hard-block submission; Apps Script still saves to Sheet
 }
 
+let cityInteracting = false, cityTouchStart = null;
+const closeCityList = () => { cityList.hidden = true; villeInput.setAttribute('aria-expanded', 'false'); };
 villeInput.addEventListener('focus', () => renderCityList(searchCities(villeInput.value)));
 villeInput.addEventListener('input', () => renderCityList(searchCities(villeInput.value)));
-villeInput.addEventListener('blur', () => setTimeout(() => { cityList.hidden = true; villeInput.setAttribute('aria-expanded', 'false'); }, 180));
+villeInput.addEventListener('blur', () => setTimeout(() => { if (!cityInteracting) closeCityList(); }, 220));
 cityList.addEventListener('pointerdown', e => {
+  cityInteracting = true;
+  cityTouchStart = { x: e.clientX, y: e.clientY };
+  if (e.pointerType === 'mouse') e.preventDefault();
+});
+cityList.addEventListener('pointercancel', () => { cityInteracting = false; cityTouchStart = null; });
+cityList.addEventListener('click', e => {
   const li = e.target.closest('li[data-v]');
+  cityInteracting = false;
   if (!li) return;
-  e.preventDefault();
+  if (cityTouchStart && Math.hypot(e.clientX - cityTouchStart.x, e.clientY - cityTouchStart.y) > 12) return;
   villeInput.value = li.dataset.v;
-  cityList.hidden = true;
-  villeInput.setAttribute('aria-expanded', 'false');
+  closeCityList();
 });
 
 const src = ['utm_source', 'utm_campaign', 'utm_content'].map(k => qs.get(k)).filter(Boolean).join(' / ');
 const newOrderId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-let orderId = newOrderId();
+let orderId = newOrderId(), isSubmitting = false;
 
 f.addEventListener('submit', async e => {
   e.preventDefault();
+  if (isSubmitting) return;
   waFallback.hidden = true;
   const nom = f.nom.value.trim(), adresse = f.adresse.value.trim();
   const phone = normPhone(f.tel.value);
   const villeRaw = f.ville.value.trim();
   if (nom.length < 2 || !phone.ok || villeRaw.length < 2 || adresse.length < 3) {
     err.textContent = 'عافاك عمّري الاسم، رقم هاتف مغربي صحيح (06/07…)، المدينة والعنوان.';
+    const firstBad = nom.length < 2 ? f.nom : (!phone.ok ? f.tel : (villeRaw.length < 2 ? f.ville : f.adresse));
+    firstBad.focus();
+    err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     return;
   }
   const ville = resolveCity(villeRaw);
@@ -468,8 +490,9 @@ f.addEventListener('submit', async e => {
   // Same event_id for the browser Lead and the server CAPI Lead: Meta keeps one of the two.
   // It stays the same if the client retries this order, and changes only for a new order.
   const eventId = 'lead_' + orderId;
+  isSubmitting = true;
   submitBtn.disabled = true;
-  submitBtn.textContent = 'جاري الإرسال…';
+  submitBtn.innerHTML = '<span class="spin" aria-hidden="true"></span>جاري الإرسال…';
 
   const msg = ['طلب جديد · AL BARAKA', 'المنتوج: ' + CONFIG.name,
     'الكمية: ' + q + (q === 2 ? ' علب' : ' علبة'), 'المجموع: ' + total + ' DH · الدفع عند الاستلام',
@@ -502,11 +525,13 @@ f.addEventListener('submit', async e => {
   } catch (_) {}
 
   if (!ok) {
+    isSubmitting = false;
     submitBtn.disabled = false;
     submitBtn.textContent = 'أكدي الطلب';
     err.textContent = 'وقع مشكل فالاتصال. تقدري تعاودي المحاولة ولا تصيفطي الطلب مباشرة فواتساب:';
     waFallback.href = waLink(msg);
     waFallback.hidden = false;
+    err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     return;
   }
 
@@ -514,6 +539,7 @@ f.addEventListener('submit', async e => {
   // delivery, nobody has paid yet. The Purchase is sent by the script when the row's statut becomes Confirmé (or Livré fallback).
   track('Lead', { currency: 'MAD', value: total }, { eventID: eventId });
 
+  isSubmitting = false;
   orderId = newOrderId();
   f.hidden = true;
   document.getElementById('done').hidden = false;
